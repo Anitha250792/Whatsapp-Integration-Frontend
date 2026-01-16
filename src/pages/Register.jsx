@@ -6,8 +6,6 @@ import { useNavigate } from "react-router-dom";
 import bgImage from "../assets/bg-file-convert.jpg";
 import "./Login.css";
 
-const API_BASE = "https://whatsapp-integration-u7tq.onrender.com";
-
 const Register = () => {
   const navigate = useNavigate();
 
@@ -15,16 +13,13 @@ const Register = () => {
   const [password1, setPassword1] = useState("");
   const [password2, setPassword2] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false);
 
-  // ✅ GOOGLE REGISTER
-  const handleGoogleLogin = () => {
-  window.location.href =
-    "https://whatsapp-integration-u7tq.onrender.com/accounts/google/login/";
-};
+  // ✅ ADD THIS FUNCTION (MISSING)
+  const handleGoogleRegister = () => {
+    window.location.href =
+      "https://whatsapp-integration-u7tq.onrender.com/accounts/google/login/";
+  };
 
-
-  // ✅ LOCAL REGISTER
   const handleRegister = async (e) => {
     e.preventDefault();
 
@@ -33,16 +28,17 @@ const Register = () => {
       return;
     }
 
-    setLoading(true);
-
     try {
-      await axios.post(`${API_BASE}/api/auth/registration/`, {
-        email,
-        password1,
-        password2,
-      });
+      await axios.post(
+        "https://whatsapp-integration-u7tq.onrender.com/api/auth/registration/",
+        {
+          email,
+          password1,
+          password2,
+        }
+      );
 
-      alert("Registered successfully. Please login.");
+      alert("Registration successful");
       navigate("/login");
     } catch (err) {
       const data = err.response?.data;
@@ -54,8 +50,6 @@ const Register = () => {
       } else {
         alert("Registration failed");
       }
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -67,9 +61,9 @@ const Register = () => {
       }}
     >
       <div className="login-card">
-        <h3 className="login-title">Create Account</h3>
+        <h3>Create Account</h3>
 
-        {/* ✅ GOOGLE SIGNUP */}
+        {/* ✅ GOOGLE REGISTER */}
         <button className="google-btn" onClick={handleGoogleRegister}>
           <FcGoogle size={22} />
           Continue with Google
@@ -77,48 +71,41 @@ const Register = () => {
 
         <div className="divider">or</div>
 
-        {/* ✅ LOCAL SIGNUP */}
         <form onSubmit={handleRegister}>
-          <label>Email</label>
           <input
             type="email"
-            placeholder="Enter email"
+            placeholder="Email"
+            required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            required
           />
 
-          <label>Password</label>
           <div className="password-field">
             <input
               type={showPassword ? "text" : "password"}
-              placeholder="Enter password"
+              placeholder="Password"
+              required
               value={password1}
               onChange={(e) => setPassword1(e.target.value)}
-              required
             />
             <span onClick={() => setShowPassword(!showPassword)}>
               {showPassword ? <FaEyeSlash /> : <FaEye />}
             </span>
           </div>
 
-          <label>Confirm Password</label>
           <input
             type="password"
-            placeholder="Confirm password"
+            placeholder="Confirm Password"
+            required
             value={password2}
             onChange={(e) => setPassword2(e.target.value)}
-            required
           />
 
-          <button className="login-btn" disabled={loading}>
-            {loading ? "Registering..." : "Register"}
-          </button>
+          <button className="login-btn">Register</button>
         </form>
 
-        <p className="register-text">
-          Already have an account?{" "}
-          <span onClick={() => navigate("/login")}>Login</span>
+        <p onClick={() => navigate("/login")}>
+          Already have an account? Login
         </p>
       </div>
     </div>
