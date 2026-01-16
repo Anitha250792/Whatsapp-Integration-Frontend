@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { FaWhatsapp, FaEnvelope } from "react-icons/fa";
 import "./Dashboard.css";
 
 const API = "https://whatsapp-integration-u7tq.onrender.com";
@@ -9,21 +10,34 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const [files, setFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const token = localStorage.getItem("access");
 
   // 🔐 Protect Dashboard
   useEffect(() => {
-    if (!token) navigate("/login");
-    fetchFiles();
+    if (!token) {
+      navigate("/login");
+    } else {
+      fetchFiles();
+    }
   }, []);
 
   // 📂 Fetch uploaded files
   const fetchFiles = async () => {
-    const res = await axios.get(`${API}/api/files/`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    setFiles(res.data);
+    try {
+      const res = await axios.get(`${API}/api/files/`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setFiles(res.data);
+    } catch (err) {
+      console.error("Fetch files error", err);
+      if (err.response?.status === 401) {
+        handleLogout();
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   // ⬆ Upload file
@@ -34,36 +48,67 @@ const Dashboard = () => {
     const formData = new FormData();
     formData.append("file", file);
 
-    setUploading(true);
-    await axios.post(`${API}/api/files/upload/`, formData, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "multipart/form-data",
-      },
-    });
-
-    setUploading(false);
-    fetchFiles();
+    try {
+      setUploading(true);
+      await axios.post(`${API}/api/files/upload/`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      fetchFiles();
+    } catch (err) {
+      alert("Upload failed");
+      console.error(err);
+    } finally {
+      setUploading(false);
+    }
   };
 
   // 🔁 Word → PDF
   const convertWordToPDF = async (id) => {
-    const res = await axios.post(
-      `${API}/api/files/convert/word-to-pdf/${id}/`,
-      {},
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-    window.open(`${API}${res.data.pdf_url}`, "_blank");
+    try {
+      const res = await axios.post(
+        `${API}/api/files/convert/word-to-pdf/${id}/`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      window.open(`${API}${res.data.pdf_url}`, "_blank");
+    } catch (err) {
+      alert("Conversion failed");
+    }
   };
 
   // 🔁 PDF → Word
   const convertPDFToWord = async (id) => {
-    const res = await axios.post(
-      `${API}/api/files/convert/pdf-to-word/${id}/`,
-      {},
-      { headers: { Authorization: `Bearer ${token}` } }
+    try {
+      const res = await axios.post(
+        `${API}/api/files/convert/pdf-to-word/${id}/`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      window.open(`${API}${res.data.docx_url}`, "_blank");
+    } catch (err) {
+      alert("Conversion failed");
+    }
+  };
+
+  // 📤 WhatsApp Share
+  const shareWhatsApp = (filename) => {
+    const msg = `I converted this file using File Converter App:\n${filename}\n${API}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
+  };
+
+  // 📧 Gmail Share
+  const shareGmail = (filename) => {
+    const subject = "File Converted Successfully";
+    const body = `Hi,\n\nI converted this file using File Converter App:\n${filename}\n\n${API}`;
+    window.open(
+      `https://mail.google.com/mail/?view=cm&fs=1&su=${encodeURIComponent(
+        subject
+      )}&body=${encodeURIComponent(body)}`,
+      "_blank"
     );
-    window.open(`${API}${res.data.docx_url}`, "_blank");
   };
 
   // 🚪 Logout
@@ -89,25 +134,42 @@ const Dashboard = () => {
       </div>
 
       {/* FILE LIST */}
-      <div className="file-list">
-        {files.map((file) => (
-          <div className="file-card" key={file.id}>
-            <p>{file.filename}</p>
+      {loading ? (
+        <p>Loading files...</p>
+      ) : (
+        <div className="file-list">
+          {files.length === 0 && <p>No files uploaded</p>}
 
-            {file.filename.endsWith(".docx") && (
-              <button onClick={() => convertWordToPDF(file.id)}>
-                Word → PDF
-              </button>
-            )}
+          {files.map((file) => (
+            <div className="file-card" key={file.id}>
+              <p>{file.filename}</p>
 
-            {file.filename.endsWith(".pdf") && (
-              <button onClick={() => convertPDFToWord(file.id)}>
-                PDF → Word
-              </button>
-            )}
-          </div>
-        ))}
-      </div>
+              {file.filename.endsWith(".docx") && (
+                <button onClick={() => convertWordToPDF(file.id)}>
+                  Word → PDF
+                </button>
+              )}
+
+              {file.filename.endsWith(".pdf") && (
+                <button onClick={() => convertPDFToWord(file.id)}>
+                  PDF → Word
+                </button>
+              )}
+
+              <div className="share-buttons">
+                <FaWhatsapp
+                  className="icon whatsapp"
+                  onClick={() => shareWhatsApp(file.filename)}
+                />
+                <FaEnvelope
+                  className="icon gmail"
+                  onClick={() => shareGmail(file.filename)}
+                />
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
