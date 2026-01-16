@@ -4,6 +4,7 @@ import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import bgImage from "../assets/bg-file-convert.jpg";
 import "./Login.css";
+import { API_BASE_URL } from "../config";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -15,10 +16,10 @@ const Login = () => {
     e.preventDefault();
 
     try {
-      const res = await axios.post(
-        "https://whatsapp-integration-u7tq.onrender.com/api/auth/login/",
-        { email, password }
-      );
+      const res = await axios.post(`${API_BASE_URL}/api/auth/login/`, {
+  email,
+  password,
+});
 
       localStorage.setItem("access", res.data.access);
       localStorage.setItem("refresh", res.data.refresh);

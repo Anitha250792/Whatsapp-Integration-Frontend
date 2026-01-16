@@ -5,6 +5,7 @@ import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import bgImage from "../assets/bg-file-convert.jpg";
 import "./Login.css";
+import { API_BASE_URL } from "../config";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -22,8 +23,7 @@ const Register = () => {
     }
 
     try {
-      await axios.post(
-        "https://whatsapp-integration-u7tq.onrender.com/api/auth/registration/",
+      await axios.post(`${API_BASE_URL}/api/auth/login/`,
         {
           email,
           password1,
@@ -48,7 +48,8 @@ const Register = () => {
 
   const handleGoogleRegister = () => {
     window.location.href =
-      "https://whatsapp-integration-u7tq.onrender.com/accounts/google/login/";
+  `${API_BASE_URL}/accounts/google/login/`;
+
   };
 
   return (
