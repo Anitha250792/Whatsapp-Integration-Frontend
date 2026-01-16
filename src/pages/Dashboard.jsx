@@ -7,12 +7,9 @@ const Dashboard = () => {
 
   useEffect(() => {
   const token = localStorage.getItem("access");
-
-  // Allow Google users too
-  if (!token) {
-    console.warn("Google user (no JWT)");
-  }
+  if (!token) navigate("/login");
 }, []);
+
 
 
   const handleLogout = () => {

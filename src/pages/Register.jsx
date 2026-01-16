@@ -46,11 +46,11 @@ const Register = () => {
     }
   };
 
-  const handleGoogleRegister = () => {
-    window.location.href =
-  `${API_BASE_URL}/accounts/google/login/`;
+  const handleGoogleLogin = () => {
+  window.location.href =
+    "https://whatsapp-integration-u7tq.onrender.com/accounts/google/login/";
+};
 
-  };
 
   return (
     <div
