@@ -18,9 +18,11 @@ const Register = () => {
   const [loading, setLoading] = useState(false);
 
   // ✅ GOOGLE REGISTER
-  const handleGoogleRegister = () => {
-    window.location.href = `${API_BASE}/accounts/google/login/`;
-  };
+  const handleGoogleLogin = () => {
+  window.location.href =
+    "https://whatsapp-integration-u7tq.onrender.com/accounts/google/login/";
+};
+
 
   // ✅ LOCAL REGISTER
   const handleRegister = async (e) => {
