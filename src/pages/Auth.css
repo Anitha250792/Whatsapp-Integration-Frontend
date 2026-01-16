@@ -1,0 +1,29 @@
+.auth-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-size: cover;
+  background-position: center;
+}
+
+.auth-card {
+  width: 360px;
+  padding: 30px;
+  border-radius: 14px;
+  background: rgba(255,255,255,0.18);
+  backdrop-filter: blur(14px);
+  color: white;
+}
+
+.password-field {
+  position: relative;
+}
+
+.password-field span {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+}

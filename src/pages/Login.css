@@ -1,0 +1,106 @@
+/* full background */
+.login-page {
+  min-height: 100vh;
+  width: 100vw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-size: cover;
+  background-position: center;
+}
+
+/* card */
+.login-card {
+  width: 380px;
+  padding: 32px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+  text-align: center;
+}
+
+/* title */
+.login-title {
+  margin-bottom: 24px;
+  font-weight: 600;
+}
+
+/* inputs */
+.login-card label {
+  display: block;
+  text-align: left;
+  margin-bottom: 6px;
+  font-size: 14px;
+}
+
+.login-card input {
+  width: 90%;
+  padding: 10px 12px;
+  margin-bottom: 16px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  font-size: 14px;
+}
+
+/* password */
+.password-field {
+  position: relative;
+}
+
+.password-field span {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  cursor: pointer;
+  color: #666;
+}
+
+/* buttons */
+.login-btn {
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  border: none;
+  background: #0d6efd;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.google-btn {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 16px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+/* extras */
+.divider {
+  margin: 14px 0;
+  color: #999;
+}
+
+.forgot {
+  margin-top: 10px;
+  font-size: 14px;
+  color: #0d6efd;
+  cursor: pointer;
+}
+
+.register-text {
+  margin-top: 16px;
+  font-size: 14px;
+}
+
+.register-text span {
+  color: #0d6efd;
+  cursor: pointer;
+  font-weight: 600;
+}
