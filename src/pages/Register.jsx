@@ -1,9 +1,8 @@
 import { useState } from "react";
-import { FcGoogle } from "react-icons/fc";
+import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import { GoogleLogin } from "@react-oauth/google";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
-import axios from "axios";
-import { useNavigate } from "react-router-dom";
 import bgImage from "../assets/bg-file-convert.jpg";
 import "./Login.css";
 
@@ -15,10 +14,7 @@ const Register = () => {
   const [password2, setPassword2] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  // ✅ ADD THIS FUNCTION (MISSING)
-  const GoogleAuthButton = () => {
-  const navigate = useNavigate();
-
+  /* 🔐 Google Register / Login */
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
       const res = await axios.post(
@@ -33,22 +29,12 @@ const Register = () => {
 
       navigate("/dashboard");
     } catch (err) {
-      console.error("Google login failed:", err);
+      console.error("Google login failed", err);
       alert("Google login failed");
     }
   };
 
-  return (
-    <GoogleLogin
-      onSuccess={handleGoogleSuccess}
-      onError={() => alert("Google Login Failed")}
-      useOneTap={false}
-    />
-  );
-};
-
-
-
+  /* 📝 Email Register */
   const handleRegister = async (e) => {
     e.preventDefault();
 
@@ -92,14 +78,16 @@ const Register = () => {
       <div className="login-card">
         <h3>Create Account</h3>
 
-        {/* ✅ GOOGLE REGISTER */}
-        <button className="google-btn" onClick={handleGoogleRegister}>
-          <FcGoogle size={22} />
-          Continue with Google
-        </button>
+        {/* ✅ GOOGLE LOGIN */}
+        <GoogleLogin
+          onSuccess={handleGoogleSuccess}
+          onError={() => alert("Google Login Failed")}
+          useOneTap={false}
+        />
 
         <div className="divider">or</div>
 
+        {/* EMAIL REGISTER */}
         <form onSubmit={handleRegister}>
           <input
             type="email"
