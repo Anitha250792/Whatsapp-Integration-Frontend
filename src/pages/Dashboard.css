@@ -1,123 +1,136 @@
+/* ====== GLOBAL ====== */
 .dashboard {
-  background: linear-gradient(180deg, #f4f6fb, #eef2ff);
+  background: radial-gradient(circle at top, #eef2ff, #f8fafc);
   min-height: 100vh;
-  font-family: "Segoe UI", sans-serif;
+  font-family: "Inter", "Segoe UI", sans-serif;
 }
 
+/* ====== HEADER ====== */
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 18px 24px;
-  background: #2563eb;
+  padding: 20px 26px;
+  backdrop-filter: blur(10px);
+  background: linear-gradient(
+    135deg,
+    rgba(37, 99, 235, 0.95),
+    rgba(59, 130, 246, 0.95)
+  );
   color: white;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 10px 30px rgba(37, 99, 235, 0.35);
 }
 
 .header h3 {
   margin: 0;
   font-weight: 600;
+  letter-spacing: 0.3px;
 }
 
+/* ====== LOGOUT ====== */
 .logout-btn {
-  background: #ef4444;
+  background: rgba(255, 255, 255, 0.15);
   border: none;
-  padding: 8px 14px;
+  padding: 8px 16px;
   color: white;
-  border-radius: 6px;
+  border-radius: 999px;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.2s ease;
 }
 
 .logout-btn:hover {
-  background: #dc2626;
+  background: rgba(255, 255, 255, 0.25);
 }
 
+/* ====== UPLOAD ====== */
 .upload-box {
-  margin: 20px auto;
-  padding: 18px;
+  margin: 26px auto;
+  padding: 26px;
   background: white;
-  border-radius: 12px;
+  border-radius: 18px;
   text-align: center;
-  width: 90%;
-  max-width: 600px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+  width: 92%;
+  max-width: 620px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.08);
+  border: 2px dashed #c7d2fe;
 }
 
 .upload-box input {
   cursor: pointer;
 }
 
+/* ====== BULK ACTIONS ====== */
 .bulk-actions {
-  margin: 20px auto;
-  padding: 16px;
+  margin: 24px auto;
+  padding: 18px;
   background: white;
-  border-radius: 12px;
+  border-radius: 18px;
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
   align-items: center;
-  width: 90%;
-  max-width: 900px;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+  width: 92%;
+  max-width: 920px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.08);
 }
 
 .bulk-actions input {
-  padding: 8px 12px;
-  border-radius: 6px;
+  padding: 9px 14px;
+  border-radius: 999px;
   border: 1px solid #d1d5db;
   outline: none;
 }
 
 .bulk-actions button {
-  background: #2563eb;
+  background: linear-gradient(135deg, #2563eb, #3b82f6);
   color: white;
   border: none;
-  padding: 8px 14px;
-  border-radius: 6px;
+  padding: 9px 16px;
+  border-radius: 999px;
   cursor: pointer;
-  transition: background 0.2s;
+  font-weight: 500;
+  transition: transform 0.15s, box-shadow 0.15s;
 }
 
 .bulk-actions button:hover {
-  background: #1e40af;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(37, 99, 235, 0.35);
 }
 
-.bulk-actions button:disabled {
-  background: #9ca3af;
-  cursor: not-allowed;
-}
-
+/* ====== FILE LIST ====== */
 .file-list {
-  padding: 20px;
-  width: 90%;
-  max-width: 900px;
+  padding: 24px;
+  width: 92%;
+  max-width: 920px;
   margin: auto;
 }
 
+/* ====== FILE CARD ====== */
 .file-card {
   background: white;
-  padding: 14px 16px;
-  margin-bottom: 12px;
-  border-radius: 12px;
+  padding: 16px 18px;
+  margin-bottom: 14px;
+  border-radius: 18px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
-  transition: transform 0.15s, box-shadow 0.15s;
+  gap: 12px;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.06);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 .file-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.1);
 }
 
-.file-card input[type="checkbox"] {
-  transform: scale(1.2);
-  cursor: pointer;
+/* Selected highlight */
+.file-card input[type="checkbox"]:checked ~ .file-info {
+  background: #eef2ff;
+  padding: 6px 10px;
+  border-radius: 10px;
 }
 
+/* ====== FILE INFO ====== */
 .file-info {
   display: flex;
   align-items: center;
@@ -132,7 +145,7 @@
 }
 
 .file-icon {
-  font-size: 22px;
+  font-size: 24px;
 }
 
 .file-icon.pdf {
@@ -143,17 +156,18 @@
   color: #2563eb;
 }
 
+/* ====== ACTIONS ====== */
 .actions {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
 }
 
 .actions button {
   background: #eef2ff;
   border: none;
-  padding: 6px 10px;
-  border-radius: 6px;
+  padding: 7px 12px;
+  border-radius: 999px;
   cursor: pointer;
   font-size: 13px;
   transition: background 0.2s;
@@ -167,11 +181,11 @@
   cursor: pointer;
   font-size: 18px;
   color: #374151;
-  transition: transform 0.2s, color 0.2s;
+  transition: transform 0.15s ease, color 0.15s ease;
 }
 
 .actions svg:hover {
-  transform: scale(1.15);
+  transform: scale(1.2);
   color: #2563eb;
 }
 
@@ -183,14 +197,16 @@
   color: #b91c1c;
 }
 
+/* ====== LOADING ====== */
 .loading {
   text-align: center;
-  margin-top: 40px;
+  margin-top: 50px;
   font-weight: 500;
   color: #4b5563;
 }
 
-@media (max-width: 600px) {
+/* ====== MOBILE ====== */
+@media (max-width: 640px) {
   .file-card {
     flex-direction: column;
     align-items: flex-start;
