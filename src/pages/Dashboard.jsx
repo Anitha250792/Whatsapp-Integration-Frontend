@@ -291,7 +291,6 @@ const shareGmail = (file) => {
                 )}
 
                 <FaWhatsapp onClick={() => shareWhatsApp(file.id, file.filename)} />
-
                 <FaEnvelope onClick={() => shareGmail(file)} />
 
                 <FaTrash
