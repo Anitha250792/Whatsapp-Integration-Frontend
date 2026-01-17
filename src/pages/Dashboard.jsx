@@ -45,17 +45,27 @@ const Dashboard = () => {
   };
   
   const downloadFile = async (url, filename) => {
-  const res = await axios.post(url, {}, {
-    headers: { Authorization: `Bearer ${token}` },
-    responseType: "blob",
-  });
+  try {
+    const res = await axios.post(url, {}, {
+      headers: { Authorization: `Bearer ${token}` },
+      responseType: "blob",
+    });
 
-  const blob = new Blob([res.data]);
-  const link = document.createElement("a");
-  link.href = URL.createObjectURL(blob);
-  link.download = filename;
-  link.click();
+    const blob = new Blob([res.data]);
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    link.click();
+
+  } catch (err) {
+    if (err.response?.data) {
+      alert("❌ Conversion failed.\nScanned PDFs need OCR.");
+    } else {
+      alert("❌ Server error. Try again.");
+    }
+  }
 };
+
 
 
   /* ⬆ Upload */
@@ -159,9 +169,10 @@ const signPDF = async () => {
 
   /* 📤 Share */
   const shareWhatsApp = (filename) => {
-  const msg = `📄 File: ${filename}\nProcessed using File Converter App`;
+  const msg = `📄 File processed: ${filename}\nDownloaded securely from File Converter App`;
   window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
 };
+
 
 
   const shareGmail = (filename) => {
