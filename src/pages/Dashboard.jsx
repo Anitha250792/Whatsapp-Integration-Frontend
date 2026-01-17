@@ -167,10 +167,12 @@ const signPDF = async () => {
 
 
 
- const shareWhatsApp = (file) => {
-  const msg = `📄 ${file.filename}\nDownload:\n${file.download_url}`;
+ const shareWhatsApp = (fileId, filename) => {
+  const link = `${API}/api/files/download/${fileId}/`;
+  const msg = `📄 ${filename}\nDownload:\n${link}`;
   window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
 };
+
 
 
 const shareGmail = (file) => {
