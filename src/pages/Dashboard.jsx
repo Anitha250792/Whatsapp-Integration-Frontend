@@ -52,10 +52,11 @@ const Dashboard = () => {
 
   const blob = new Blob([res.data]);
   const link = document.createElement("a");
-  link.href = window.URL.createObjectURL(blob);
+  link.href = URL.createObjectURL(blob);
   link.download = filename;
   link.click();
 };
+
 
   /* ⬆ Upload */
   const handleUpload = async (e) => {
@@ -92,57 +93,76 @@ const Dashboard = () => {
     fetchFiles();
   };
 
-  /* 🔁 STREAMING CONVERSIONS (IMPORTANT FIX) */
-  const convertWordToPDF = (id) => {
-  window.open(
-    `${API}/api/files/convert/word-to-pdf/${id}/`,
-    "_blank"
-  );
-};
+  const convertWordToPDF = (id) =>
+  downloadFile(`${API}/api/files/convert/word-to-pdf/${id}/`, "converted.pdf");
 
-const convertPDFToWord = (id) => {
-  window.open(
-    `${API}/api/files/convert/pdf-to-word/${id}/`,
-    "_blank"
-  );
-};
+const convertPDFToWord = (id) =>
+  downloadFile(`${API}/api/files/convert/pdf-to-word/${id}/`, "converted.docx");
 
-const mergePDFs = () => {
-  if (selectedIds.length < 2) {
-    alert("Select at least 2 PDFs");
-    return;
-  }
+const mergePDFs = async () => {
+  if (selectedIds.length < 2) return alert("Select at least 2 PDFs");
 
-  axios.post(
+  const res = await axios.post(
     `${API}/api/files/merge/`,
     { file_ids: selectedIds },
-    { headers: { Authorization: `Bearer ${token}` } }
-  ).then(res => {
-    const url = URL.createObjectURL(res.data);
-    window.open(url, "_blank");
-  });
+    {
+      headers: { Authorization: `Bearer ${token}` },
+      responseType: "blob",
+    }
+  );
+
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(res.data);
+  link.download = "merged.pdf";
+  link.click();
 };
 
-const splitPDF = (id) => {
-  window.open(
-    `${API}/api/files/split/${id}/`,
-    "_blank"
+
+const splitPDF = async () => {
+  if (selectedIds.length !== 1) return alert("Select one PDF");
+
+  const res = await axios.post(
+    `${API}/api/files/split/${selectedIds[0]}/`,
+    {},
+    {
+      headers: { Authorization: `Bearer ${token}` },
+      responseType: "blob",
+    }
   );
+
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(res.data);
+  link.download = "split.zip";
+  link.click();
 };
 
-const signPDF = (id) => {
-  window.open(
-    `${API}/api/files/sign/${id}/?signer=${encodeURIComponent(signer)}`,
-    "_blank"
+
+const signPDF = async () => {
+  if (!signer || selectedIds.length !== 1) return alert("Signer required");
+
+  const res = await axios.post(
+    `${API}/api/files/sign/${selectedIds[0]}/`,
+    { signer },
+    {
+      headers: { Authorization: `Bearer ${token}` },
+      responseType: "blob",
+    }
   );
+
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(res.data);
+  link.download = "signed.pdf";
+  link.click();
 };
+
 
 
   /* 📤 Share */
   const shareWhatsApp = (filename) => {
-    const msg = `📄 ${filename}\nShared via File Converter App\n${API}`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
-  };
+  const msg = `📄 File: ${filename}\nProcessed using File Converter App`;
+  window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
+};
+
 
   const shareGmail = (filename) => {
     window.open(
