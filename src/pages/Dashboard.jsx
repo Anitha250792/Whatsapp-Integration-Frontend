@@ -94,16 +94,16 @@ const Dashboard = () => {
 
   /* 🔁 STREAMING CONVERSIONS (IMPORTANT FIX) */
   const convertWordToPDF = (id) => {
-  downloadFile(
+  window.open(
     `${API}/api/files/convert/word-to-pdf/${id}/`,
-    "converted.pdf"
+    "_blank"
   );
 };
 
 const convertPDFToWord = (id) => {
-  downloadFile(
+  window.open(
     `${API}/api/files/convert/pdf-to-word/${id}/`,
-    "converted.docx"
+    "_blank"
   );
 };
 
@@ -116,66 +116,27 @@ const mergePDFs = () => {
   axios.post(
     `${API}/api/files/merge/`,
     { file_ids: selectedIds },
-    {
-      headers: { Authorization: `Bearer ${token}` },
-      responseType: "blob",
-    }
+    { headers: { Authorization: `Bearer ${token}` } }
   ).then(res => {
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(res.data);
-    link.download = "merged.pdf";
-    link.click();
+    const url = URL.createObjectURL(res.data);
+    window.open(url, "_blank");
   });
-
-  setSelectedIds([]);
 };
 
-const splitPDF = () => {
-  if (selectedIds.length !== 1) {
-    alert("Select one PDF");
-    return;
-  }
-
-  axios.post(
-    `${API}/api/files/split/${selectedIds[0]}/`,
-    {},
-    {
-      headers: { Authorization: `Bearer ${token}` },
-      responseType: "blob",
-    }
-  ).then(res => {
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(res.data);
-    link.download = "split_pages.zip";
-    link.click();
-  });
-
-  setSelectedIds([]);
+const splitPDF = (id) => {
+  window.open(
+    `${API}/api/files/split/${id}/`,
+    "_blank"
+  );
 };
 
-const signPDF = () => {
-  if (selectedIds.length !== 1 || !signer) {
-    alert("Enter signer name");
-    return;
-  }
-
-  axios.post(
-    `${API}/api/files/sign/${selectedIds[0]}/`,
-    { signer },
-    {
-      headers: { Authorization: `Bearer ${token}` },
-      responseType: "blob",
-    }
-  ).then(res => {
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(res.data);
-    link.download = "signed.pdf";
-    link.click();
-  });
-
-  setSigner("");
-  setSelectedIds([]);
+const signPDF = (id) => {
+  window.open(
+    `${API}/api/files/sign/${id}/?signer=${encodeURIComponent(signer)}`,
+    "_blank"
+  );
 };
+
 
   /* 📤 Share */
   const shareWhatsApp = (filename) => {
