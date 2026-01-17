@@ -67,24 +67,24 @@ const Dashboard = () => {
 };
 
 
-
   /* ⬆ Upload */
   const handleUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+  const file = e.target.files[0];
+  if (!file) return;
 
-    const formData = new FormData();
-    formData.append("file", file);
+  const formData = new FormData();
+  formData.append("file", file);
 
-    setUploading(true);
-    await axios.post(`${API}/api/files/upload/`, formData, {
+  await axios.post(
+    `${API_BASE}/api/files/upload/`,
+    formData,
+    {
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${localStorage.getItem("access")}`,
       },
-    });
-    setUploading(false);
-    fetchFiles();
-  };
+    }
+  );
+};
 
   /* ☑ Select files */
   const toggleSelect = (id) => {
