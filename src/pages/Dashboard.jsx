@@ -217,9 +217,16 @@ const shareGmail = (file) => {
 
   /* 🚪 Logout */
   const handleLogout = () => {
-    localStorage.clear();
-    navigate("/login");
-  };
+  localStorage.removeItem("access");
+  localStorage.removeItem("refresh");
+
+  if (window.google) {
+    window.google.accounts.id.disableAutoSelect();
+  }
+
+  navigate("/login");
+};
+
 
   return (
     <div className="dashboard">

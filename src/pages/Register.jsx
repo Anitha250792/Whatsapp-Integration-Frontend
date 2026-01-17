@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { FcGoogle } from "react-icons/fc";
+import { GoogleLogin } from "@react-oauth/google";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
@@ -15,10 +16,38 @@ const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
 
   // ✅ ADD THIS FUNCTION (MISSING)
-  const handleGoogleRegister = () => {
-    window.location.href =
-      "https://whatsapp-integration-u7tq.onrender.com/accounts/google/login/";
+  const GoogleAuthButton = () => {
+  const navigate = useNavigate();
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    try {
+      const res = await axios.post(
+        "https://whatsapp-integration-u7tq.onrender.com/accounts/google/",
+        {
+          token: credentialResponse.credential,
+        }
+      );
+
+      localStorage.setItem("access", res.data.access);
+      localStorage.setItem("refresh", res.data.refresh);
+
+      navigate("/dashboard");
+    } catch (err) {
+      console.error("Google login failed:", err);
+      alert("Google login failed");
+    }
   };
+
+  return (
+    <GoogleLogin
+      onSuccess={handleGoogleSuccess}
+      onError={() => alert("Google Login Failed")}
+      useOneTap={false}
+    />
+  );
+};
+
+
 
   const handleRegister = async (e) => {
     e.preventDefault();
