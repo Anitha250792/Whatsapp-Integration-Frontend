@@ -37,7 +37,7 @@ const Dashboard = () => {
   const fetchFiles = async () => {
   try {
     const res = await axios.get(
-      `${API}/api/files/`,
+      `${API}/files/`,
       {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("access")}`,

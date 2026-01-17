@@ -45,7 +45,7 @@ const Register = () => {
 
     try {
       await axios.post(
-        "https://whatsapp-integration-u7tq.onrender.com/api/auth/registration/",
+        "https://whatsapp-integration-u7tq.onrender.com/auth/registration/",
         {
           email,
           password1,
