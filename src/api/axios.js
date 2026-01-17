@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "https://whatsapp-integration-u7tq.onrender.com/api/",
+  baseURL: "https://whatsapp-integration-u7tq.onrender.com",
 });
 
 api.interceptors.request.use((config) => {
