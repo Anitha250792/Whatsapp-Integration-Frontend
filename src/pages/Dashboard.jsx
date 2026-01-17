@@ -167,22 +167,20 @@ const signPDF = async () => {
 
 
 
-  /* 📤 Share */
-  const shareWhatsApp = (filename) => {
-  const msg = `📄 File processed: ${filename}\nDownloaded securely from File Converter App`;
+ const shareWhatsApp = (file) => {
+  const msg = `📄 ${file.filename}\nDownload:\n${file.download_url}`;
   window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
 };
 
 
-
-  const shareGmail = (filename) => {
-    window.open(
-      `https://mail.google.com/mail/?view=cm&fs=1&su=Shared File&body=${encodeURIComponent(
-        filename + "\n" + API
-      )}`,
-      "_blank"
-    );
-  };
+const shareGmail = (file) => {
+  window.open(
+    `https://mail.google.com/mail/?view=cm&fs=1&su=File Download&body=${encodeURIComponent(
+      `Download here:\n${file.download_url}`
+    )}`,
+    "_blank"
+  );
+};
 
   /* 🚪 Logout */
   const handleLogout = () => {
