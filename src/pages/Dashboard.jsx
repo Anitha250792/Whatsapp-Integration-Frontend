@@ -85,20 +85,19 @@ const Dashboard = () => {
   }
 };
 
-
-  /* ⬆ Upload */
-  const handleUpload = async (e) => {
+/* ⬆ Upload */
+const handleUpload = async (e) => {
   const file = e.target.files[0];
   if (!file) return;
 
-  const formData = new FormData();
-  formData.append("file", file);
+  setUploading(true);
 
   try {
-    setUploading(true);
+    const formData = new FormData();
+    formData.append("file", file);
 
     await axios.post(
-      `${API}/api/files/upload/`,
+      "https://whatsapp-integration-u7tq.onrender.com/files/upload/",
       formData,
       {
         headers: {
@@ -107,15 +106,14 @@ const Dashboard = () => {
       }
     );
 
-    await fetchFiles();
+    await fetchFiles(); // refresh list
   } catch (err) {
+    console.error("Upload error:", err);
     alert("❌ Upload failed");
-    console.error(err);
   } finally {
     setUploading(false);
   }
-}; // ✅ THIS BRACE WAS MISSING
-
+};
 
   /* ☑ Select files */
   const toggleSelect = (id) => {
