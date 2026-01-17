@@ -25,24 +25,42 @@ const Dashboard = () => {
 
   /* 🔐 Protect dashboard */
   useEffect(() => {
-    if (!token) navigate("/login");
-    else fetchFiles();
-    // eslint-disable-next-line
-  }, []);
+  if (!token) {
+    navigate("/login");
+    return;
+  }
+  fetchFiles();
+}, [token]);
+
 
   /* 📂 Fetch files */
   const fetchFiles = async () => {
-    try {
-      const res = await axios.get(`${API}/api/files/`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setFiles(res.data);
-    } catch (err) {
-      handleLogout();
-    } finally {
-      setLoading(false);
+  try {
+    const res = await axios.get(
+      `${API}/api/files/`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("access")}`,
+        },
+      }
+    );
+
+    setFiles(res.data);
+  } catch (err) {
+    console.error("Fetch files failed:", err);
+
+    // 🔐 Token invalid or expired
+    if (err.response?.status === 401) {
+      localStorage.clear();
+      navigate("/login");
+    } else {
+      alert("Failed to load files");
     }
-  };
+  } finally {
+    setLoading(false);
+  }
+};
+
   
   const downloadFile = async (url, filename) => {
   try {
@@ -58,11 +76,12 @@ const Dashboard = () => {
     link.click();
 
   } catch (err) {
-    if (err.response?.data) {
-      alert("❌ Conversion failed.\nScanned PDFs need OCR.");
-    } else {
-      alert("❌ Server error. Try again.");
-    }
+    if (err.response?.status === 400) {
+  alert("❌ Conversion failed.\nScanned PDFs need OCR.");
+} else {
+  alert("❌ Server error. Try again.");
+}
+
   }
 };
 
@@ -75,16 +94,28 @@ const Dashboard = () => {
   const formData = new FormData();
   formData.append("file", file);
 
-  await axios.post(
-    `${API_BASE}/api/files/upload/`,
-    formData,
-    {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("access")}`,
-      },
-    }
-  );
-};
+  try {
+    setUploading(true);
+
+    await axios.post(
+      `${API}/api/files/upload/`,
+      formData,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("access")}`,
+        },
+      }
+    );
+
+    await fetchFiles();
+  } catch (err) {
+    alert("❌ Upload failed");
+    console.error(err);
+  } finally {
+    setUploading(false);
+  }
+}; // ✅ THIS BRACE WAS MISSING
+
 
   /* ☑ Select files */
   const toggleSelect = (id) => {
@@ -176,9 +207,11 @@ const signPDF = async () => {
 
 
 const shareGmail = (file) => {
+  const link = `${API}/api/files/download/${file.id}/`;
+
   window.open(
     `https://mail.google.com/mail/?view=cm&fs=1&su=File Download&body=${encodeURIComponent(
-      `Download here:\n${file.download_url}`
+      `Download here:\n${link}`
     )}`,
     "_blank"
   );
@@ -257,8 +290,10 @@ const shareGmail = (file) => {
                   </button>
                 )}
 
-                <FaWhatsapp onClick={() => shareWhatsApp(file.filename)} />
-                <FaEnvelope onClick={() => shareGmail(file.filename)} />
+                <FaWhatsapp onClick={() => shareWhatsApp(file.id, file.filename)} />
+
+                <FaEnvelope onClick={() => shareGmail(file)} />
+
                 <FaTrash
                   className="delete"
                   onClick={() => deleteFile(file.id)}
