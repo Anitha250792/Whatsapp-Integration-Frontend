@@ -85,6 +85,7 @@ const Dashboard = () => {
   }
 };
 
+
 /* ⬆ Upload */
 const handleUpload = async (e) => {
   const file = e.target.files[0];
@@ -97,19 +98,19 @@ const handleUpload = async (e) => {
     formData.append("file", file);
 
     await axios.post(
-  "https://whatsapp-integration-u7tq.onrender.com/files/upload/",
-  formData,
-  {
-    headers: {
-      Authorization: `Bearer ${localStorage.getItem("access")}`,
-    },
-  }
-);
-
+      `${API}/api/files/upload/`,
+      formData,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
 
     await fetchFiles(); // refresh list
   } catch (err) {
-    console.error("Upload error:", err);
+    console.error("Upload error:", err.response || err);
     alert("❌ Upload failed");
   } finally {
     setUploading(false);
@@ -127,29 +128,32 @@ const handleUpload = async (e) => {
   const deleteFile = async (id) => {
     if (!window.confirm("Delete this file?")) return;
 
-    await axios.delete(`${API}/api/files/delete/${id}/`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    await axios.delete(`${API}/files/delete/${id}/`, {
+  headers: { Authorization: `Bearer ${token}` },
+});
+
     fetchFiles();
   };
 
   const convertWordToPDF = (id) =>
-  downloadFile(`${API}/api/files/convert/word-to-pdf/${id}/`, "converted.pdf");
+  downloadFile(`${API}/files/convert/word-to-pdf/${id}/`, "converted.pdf");
+
 
 const convertPDFToWord = (id) =>
-  downloadFile(`${API}/api/files/convert/pdf-to-word/${id}/`, "converted.docx");
+  downloadFile(`${API}/files/convert/pdf-to-word/${id}/`, "converted.docx");
 
 const mergePDFs = async () => {
   if (selectedIds.length < 2) return alert("Select at least 2 PDFs");
 
   const res = await axios.post(
-    `${API}/api/files/merge/`,
-    { file_ids: selectedIds },
-    {
-      headers: { Authorization: `Bearer ${token}` },
-      responseType: "blob",
-    }
-  );
+  `${API}/files/merge/`,
+  { file_ids: selectedIds },
+  {
+    headers: { Authorization: `Bearer ${token}` },
+    responseType: "blob",
+  }
+);
+
 
   const link = document.createElement("a");
   link.href = URL.createObjectURL(res.data);
@@ -162,13 +166,14 @@ const splitPDF = async () => {
   if (selectedIds.length !== 1) return alert("Select one PDF");
 
   const res = await axios.post(
-    `${API}/api/files/split/${selectedIds[0]}/`,
-    {},
-    {
-      headers: { Authorization: `Bearer ${token}` },
-      responseType: "blob",
-    }
-  );
+  `${API}/files/split/${selectedIds[0]}/`,
+  {},
+  {
+    headers: { Authorization: `Bearer ${token}` },
+    responseType: "blob",
+  }
+);
+
 
   const link = document.createElement("a");
   link.href = URL.createObjectURL(res.data);
@@ -181,13 +186,13 @@ const signPDF = async () => {
   if (!signer || selectedIds.length !== 1) return alert("Signer required");
 
   const res = await axios.post(
-    `${API}/api/files/sign/${selectedIds[0]}/`,
-    { signer },
-    {
-      headers: { Authorization: `Bearer ${token}` },
-      responseType: "blob",
-    }
-  );
+  `${API}/files/sign/${selectedIds[0]}/`,
+  { signer },
+  {
+    headers: { Authorization: `Bearer ${token}` },
+    responseType: "blob",
+  }
+);
 
   const link = document.createElement("a");
   link.href = URL.createObjectURL(res.data);
@@ -206,7 +211,8 @@ const signPDF = async () => {
 
 
 const shareGmail = (file) => {
-  const link = `${API}/api/files/download/${file.id}/`;
+  const link = `${API}/files/download/${fileId}/`;
+
 
   window.open(
     `https://mail.google.com/mail/?view=cm&fs=1&su=File Download&body=${encodeURIComponent(
