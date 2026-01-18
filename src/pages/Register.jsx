@@ -18,7 +18,7 @@ const Register = () => {
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
       const res = await axios.post(
-        "https://whatsapp-integration-u7tq.onrender.com/accounts/google/login/",
+        "https://whatsapp-integration-u7tq.onrender.com/accounts/google/",
         {
           token: credentialResponse.credential,
         }
