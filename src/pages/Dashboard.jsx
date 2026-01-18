@@ -97,14 +97,15 @@ const handleUpload = async (e) => {
     formData.append("file", file);
 
     await axios.post(
-      "https://whatsapp-integration-u7tq.onrender.com/files/upload/",
-      formData,
-      {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("access")}`,
-        },
-      }
-    );
+  "https://whatsapp-integration-u7tq.onrender.com/files/upload/",
+  formData,
+  {
+    headers: {
+      Authorization: `Bearer ${localStorage.getItem("access")}`,
+    },
+  }
+);
+
 
     await fetchFiles(); // refresh list
   } catch (err) {
