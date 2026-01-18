@@ -1,6 +1,6 @@
 import { useState } from "react";
 import axios from "axios";
-import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { FaEye, FaEyeSlash, FaFacebook } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
 import bgImage from "../assets/bg-file-convert.jpg";
@@ -13,6 +13,7 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
+  /* 🔐 Local login */
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
@@ -46,6 +47,12 @@ const Login = () => {
     }
   };
 
+  /* 🔵 Facebook Login (redirect-based – SAFE) */
+  const facebookLogin = () => {
+    window.location.href =
+      "https://whatsapp-integration-u7tq.onrender.com/accounts/facebook/login/";
+  };
+
   return (
     <div
       className="login-page"
@@ -54,17 +61,26 @@ const Login = () => {
       }}
     >
       <div className="login-card">
-        <h3>Login</h3>
+        <h3 className="login-title">Login</h3>
 
-        {/* ✅ GOOGLE LOGIN */}
-        <GoogleLogin
-          onSuccess={handleGoogleSuccess}
-          onError={() => alert("Google Login Failed")}
-          useOneTap={false}
-        />
+        {/* 🔘 SOCIAL LOGIN ROW */}
+        <div className="social-grid">
+          {/* Google */}
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={() => alert("Google Login Failed")}
+            useOneTap={false}
+          />
+
+          {/* Facebook */}
+          <button className="facebook-btn" onClick={facebookLogin}>
+            <FaFacebook /> Facebook
+          </button>
+        </div>
 
         <div className="divider">or</div>
 
+        {/* 🔐 EMAIL LOGIN */}
         <form onSubmit={handleLogin}>
           <input
             type="email"
@@ -90,7 +106,9 @@ const Login = () => {
           <button className="login-btn">Login</button>
         </form>
 
-        <p onClick={() => navigate("/register")}>Create Account</p>
+        <p className="register-text" onClick={() => navigate("/register")}>
+          Create Account
+        </p>
       </div>
     </div>
   );
