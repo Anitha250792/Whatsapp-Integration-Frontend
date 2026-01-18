@@ -14,7 +14,6 @@ const API = "https://whatsapp-integration-u7tq.onrender.com";
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const token = localStorage.getItem("access");
 
   const [files, setFiles] = useState([]);
   const [selectedIds, setSelectedIds] = useState([]);
@@ -22,14 +21,18 @@ const Dashboard = () => {
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  const token = localStorage.getItem("access");
+
+  /* 🔐 Protect dashboard */
   useEffect(() => {
     if (!token) {
       navigate("/login");
       return;
     }
     fetchFiles();
-  }, [token]);
+  }, []);
 
+  /* 📂 Fetch files */
   const fetchFiles = async () => {
     try {
       const res = await axios.get(`${API}/files/`, {
@@ -37,39 +40,23 @@ const Dashboard = () => {
       });
       setFiles(res.data);
     } catch (err) {
+      console.error("Fetch files failed:", err);
       if (err.response?.status === 401) {
         localStorage.clear();
         navigate("/login");
-      } else {
-        alert("Failed to load files");
       }
     } finally {
       setLoading(false);
     }
   };
 
-  const downloadFile = async (url, filename) => {
-    try {
-      const res = await axios.get(url, {
-        headers: { Authorization: `Bearer ${token}` },
-        responseType: "blob",
-      });
-
-      const blob = new Blob([res.data]);
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = filename;
-      link.click();
-    } catch {
-      alert("❌ Download failed");
-    }
-  };
-
+  /* ⬆ Upload */
   const handleUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
     setUploading(true);
+
     try {
       const formData = new FormData();
       formData.append("file", file);
@@ -77,42 +64,130 @@ const Dashboard = () => {
       await axios.post(`${API}/files/upload/`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
-          "Content-Type": "multipart/form-data",
         },
       });
 
       fetchFiles();
-    } catch {
+    } catch (err) {
+      console.error("Upload error:", err.response || err);
       alert("❌ Upload failed");
     } finally {
       setUploading(false);
     }
   };
 
+  /* ☑ Select */
+  const toggleSelect = (id) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+    );
+  };
+
+  /* ❌ Delete */
   const deleteFile = async (id) => {
     if (!window.confirm("Delete this file?")) return;
+
     await axios.delete(`${API}/files/delete/${id}/`, {
       headers: { Authorization: `Bearer ${token}` },
     });
+
     fetchFiles();
   };
 
-  const shareWhatsApp = (fileId, filename) => {
-    const link = `${API}/files/download/${fileId}/`;
+  /* ⬇ Download helper */
+  const downloadFile = async (url, filename) => {
+    const res = await axios.post(url, {}, {
+      headers: { Authorization: `Bearer ${token}` },
+      responseType: "blob",
+    });
+
+    const blob = new Blob([res.data]);
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = filename;
+    link.click();
+  };
+
+  /* 🔄 Convert */
+  const convertWordToPDF = (id) =>
+    downloadFile(`${API}/files/convert/word-to-pdf/${id}/`, "converted.pdf");
+
+  const convertPDFToWord = (id) =>
+    downloadFile(`${API}/files/convert/pdf-to-word/${id}/`, "converted.docx");
+
+  /* 🧩 Merge */
+  const mergePDFs = async () => {
+    if (selectedIds.length < 2) return alert("Select at least 2 PDFs");
+
+    const res = await axios.post(
+      `${API}/files/merge/`,
+      { file_ids: selectedIds },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: "blob",
+      }
+    );
+
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(res.data);
+    link.download = "merged.pdf";
+    link.click();
+  };
+
+  /* ✂ Split */
+  const splitPDF = async () => {
+    if (selectedIds.length !== 1) return alert("Select one PDF");
+
+    const res = await axios.post(
+      `${API}/files/split/${selectedIds[0]}/`,
+      {},
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: "blob",
+      }
+    );
+
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(res.data);
+    link.download = "split.zip";
+    link.click();
+  };
+
+  /* ✍ Sign */
+  const signPDF = async () => {
+    if (!signer || selectedIds.length !== 1)
+      return alert("Signer name required");
+
+    const res = await axios.post(
+      `${API}/files/sign/${selectedIds[0]}/`,
+      { signer },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: "blob",
+      }
+    );
+
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(res.data);
+    link.download = "signed.pdf";
+    link.click();
+  };
+
+  /* 📲 Share */
+  const shareWhatsApp = (id, filename) => {
+    const link = `${API}/files/download/${id}/`;
     const msg = `📄 ${filename}\nDownload:\n${link}`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
+    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`);
   };
 
   const shareGmail = (file) => {
     const link = `${API}/files/download/${file.id}/`;
     window.open(
-      `https://mail.google.com/mail/?view=cm&fs=1&su=File Download&body=${encodeURIComponent(
-        `Download here:\n${link}`
-      )}`,
-      "_blank"
+      `https://mail.google.com/mail/?view=cm&fs=1&su=File&body=${encodeURIComponent(link)}`
     );
   };
 
+  /* 🚪 Logout */
   const handleLogout = () => {
     localStorage.clear();
     navigate("/login");
@@ -122,7 +197,9 @@ const Dashboard = () => {
     <div className="dashboard">
       <div className="header">
         <h3>📄 File Converter Dashboard</h3>
-        <button className="logout-btn" onClick={handleLogout}>Logout</button>
+        <button className="logout-btn" onClick={handleLogout}>
+          Logout
+        </button>
       </div>
 
       <div className="upload-box">
@@ -130,14 +207,58 @@ const Dashboard = () => {
         {uploading && <span>Uploading...</span>}
       </div>
 
-      {loading ? <p>Loading...</p> : (
+      <div className="bulk-actions">
+        <button onClick={mergePDFs}>Merge PDFs</button>
+        <button onClick={splitPDF}>Split PDF</button>
+
+        <input
+          placeholder="Signer name"
+          value={signer}
+          onChange={(e) => setSigner(e.target.value)}
+        />
+        <button onClick={signPDF}>Sign PDF</button>
+      </div>
+
+      {loading ? (
+        <p>Loading files...</p>
+      ) : (
         <div className="file-list">
+          {files.length === 0 && <p>No files uploaded</p>}
+
           {files.map((file) => (
-            <div key={file.id} className="file-card">
-              <span>{file.filename}</span>
-              <FaWhatsapp onClick={() => shareWhatsApp(file.id, file.filename)} />
-              <FaEnvelope onClick={() => shareGmail(file)} />
-              <FaTrash onClick={() => deleteFile(file.id)} />
+            <div className="file-card" key={file.id}>
+              <input
+                type="checkbox"
+                checked={selectedIds.includes(file.id)}
+                onChange={() => toggleSelect(file.id)}
+              />
+
+              <div className="file-info">
+                {file.filename.endsWith(".pdf") ? (
+                  <FaFilePdf />
+                ) : (
+                  <FaFileWord />
+                )}
+                <span>{file.filename}</span>
+              </div>
+
+              <div className="actions">
+                {file.filename.endsWith(".docx") && (
+                  <button onClick={() => convertWordToPDF(file.id)}>
+                    Word → PDF
+                  </button>
+                )}
+
+                {file.filename.endsWith(".pdf") && (
+                  <button onClick={() => convertPDFToWord(file.id)}>
+                    PDF → Word
+                  </button>
+                )}
+
+                <FaWhatsapp onClick={() => shareWhatsApp(file.id, file.filename)} />
+                <FaEnvelope onClick={() => shareGmail(file)} />
+                <FaTrash onClick={() => deleteFile(file.id)} />
+              </div>
             </div>
           ))}
         </div>
