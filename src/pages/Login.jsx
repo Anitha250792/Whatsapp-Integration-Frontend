@@ -9,11 +9,12 @@ import { API_BASE_URL } from "../config";
 
 const Login = () => {
   const navigate = useNavigate();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  /* 🔐 Local login */
+  /* 🔐 Email / Password Login */
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
@@ -25,12 +26,12 @@ const Login = () => {
       localStorage.setItem("access", res.data.access);
       localStorage.setItem("refresh", res.data.refresh);
       navigate("/dashboard");
-    } catch {
+    } catch (err) {
       alert("Invalid email or password");
     }
   };
 
-  /* 🔐 Google Login */
+  /* 🔐 Google Login (JWT-based) */
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
       const res = await axios.post(
@@ -47,7 +48,7 @@ const Login = () => {
     }
   };
 
-  /* 🔵 Facebook Login (redirect-based – SAFE) */
+  /* 🔵 Facebook Login (redirect-based – safe) */
   const facebookLogin = () => {
     window.location.href =
       "https://whatsapp-integration-u7tq.onrender.com/accounts/facebook/login/";
@@ -63,17 +64,26 @@ const Login = () => {
       <div className="login-card">
         <h3 className="login-title">Login</h3>
 
-        {/* 🔘 SOCIAL LOGIN ROW */}
+        {/* 🔘 SOCIAL LOGIN */}
         <div className="social-grid">
           {/* Google */}
-          <GoogleLogin
-            onSuccess={handleGoogleSuccess}
-            onError={() => alert("Google Login Failed")}
-            useOneTap={false}
-          />
+          <div className="google-wrapper">
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={() => alert("Google Login Failed")}
+              useOneTap={false}
+              theme="outline"
+              size="large"
+              width="100%"
+            />
+          </div>
 
           {/* Facebook */}
-          <button className="facebook-btn" onClick={facebookLogin}>
+          <button
+            type="button"
+            className="facebook-btn"
+            onClick={facebookLogin}
+          >
             <FaFacebook /> Facebook
           </button>
         </div>
@@ -103,10 +113,16 @@ const Login = () => {
             </span>
           </div>
 
-          <button className="login-btn">Login</button>
+          <button type="submit" className="login-btn">
+            Login
+          </button>
         </form>
 
-        <p className="register-text" onClick={() => navigate("/register")}>
+        <p
+          className="register-text"
+          onClick={() => navigate("/register")}
+          style={{ cursor: "pointer" }}
+        >
           Create Account
         </p>
       </div>

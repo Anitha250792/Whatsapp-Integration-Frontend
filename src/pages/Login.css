@@ -170,3 +170,19 @@
     max-width: 420px;
   }
 }
+/* Google button wrapper fix */
+.google-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.google-wrapper iframe {
+  width: 100% !important;
+}
+
+/* Match social button heights */
+.social-grid button,
+.google-wrapper {
+  height: 44px;
+}
