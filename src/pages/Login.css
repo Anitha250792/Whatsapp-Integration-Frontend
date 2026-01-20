@@ -1,20 +1,23 @@
 * {
   box-sizing: border-box;
 }
+
 /* full background */
 .login-page {
   min-height: 100vh;
-  width: 100vw;
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
   background-size: cover;
   background-position: center;
+  padding: 16px;
 }
 
 /* card */
 .login-card {
-  width: 380px;
+  width: 100%;
+  max-width: 380px;
   padding: 32px;
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.95);
@@ -28,21 +31,28 @@
   font-weight: 600;
 }
 
-/* inputs */
+/* labels */
 .login-card label {
   display: block;
   text-align: left;
   margin-bottom: 6px;
   font-size: 14px;
+  font-weight: 500;
 }
 
+/* inputs */
 .login-card input {
-  width: 90%;
-  padding: 10px 12px;
+  width: 100%;
+  padding: 11px 12px;
   margin-bottom: 16px;
   border-radius: 6px;
   border: 1px solid #ddd;
   font-size: 14px;
+}
+.login-card input:focus {
+  outline: none;
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 2px rgba(13, 110, 253, 0.15);
 }
 
 /* password */
@@ -50,10 +60,15 @@
   position: relative;
 }
 
+.password-field input {
+  padding-right: 42px;
+}
+
 .password-field span {
   position: absolute;
-  right: 10px;
-  top: 10px;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
   cursor: pointer;
   color: #666;
 }
@@ -70,10 +85,14 @@
   cursor: pointer;
 }
 
+.login-btn:hover {
+  background: #0b5ed7;
+}
+
+/* Google button */
 .google-btn {
   width: 100%;
   padding: 12px;
-  margin-bottom: 16px;
   border-radius: 8px;
   border: 1px solid #ddd;
   background: white;
@@ -82,38 +101,6 @@
   justify-content: center;
   gap: 10px;
   cursor: pointer;
-}
-
-/* extras */
-.divider {
-  margin: 14px 0;
-  color: #999;
-}
-
-.forgot {
-  margin-top: 10px;
-  font-size: 14px;
-  color: #0d6efd;
-  cursor: pointer;
-}
-
-.register-text {
-  margin-top: 16px;
-  font-size: 14px;
-}
-
-.register-text span {
-  color: #0d6efd;
-  cursor: pointer;
-  font-weight: 600;
-}
-
-/* Social login row */
-.social-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-bottom: 16px;
 }
 
 /* Facebook button */
@@ -135,80 +122,51 @@
   background: #166fe5;
 }
 
-/* =========================
-   📱 Small devices (phones)
-   ========================= */
+/* divider */
+.divider {
+  margin: 16px 0;
+  color: #999;
+  font-size: 14px;
+}
+
+/* register text */
+.register-text {
+  margin-top: 16px;
+  font-size: 14px;
+}
+
+.register-text span {
+  color: #0d6efd;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+/* Social login row */
+.social-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+/* 📱 Small devices */
 @media (max-width: 480px) {
-  .login-page {
-    padding: 16px;
-  }
-
   .login-card {
-    width: 100%;
     padding: 20px;
-    border-radius: 12px;
   }
 
-  .login-title {
-    font-size: 20px;
-    margin-bottom: 18px;
-  }
-
-  .login-card input {
-    width: 100%;
-    font-size: 14px;
-  }
-
-  .password-field span {
-    top: 38px;
-    right: 12px;
-  }
-
-  .login-btn,
-  .google-btn,
-  .facebook-btn {
-    padding: 11px;
-    font-size: 14px;
-  }
-
-  /* Stack social buttons */
   .social-grid {
     grid-template-columns: 1fr;
   }
 
-  .divider,
-  .forgot,
-  .register-text {
-    font-size: 13px;
+  .login-title {
+    font-size: 20px;
   }
 }
 
-/* =========================
-   📱 Tablets & large phones
-   ========================= */
+/* 📱 Tablets */
 @media (max-width: 768px) {
   .login-card {
-    width: 90%;
     max-width: 420px;
   }
-
-  .login-title {
-    font-size: 22px;
-  }
-
-  .login-btn,
-  .google-btn,
-  .facebook-btn {
-    font-size: 15px;
-  }
 }
-
-/* =========================
-   💻 Small laptops (optional)
-   ========================= */
-@media (max-width: 1024px) {
-  .login-card {
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.22);
-  }
-}
-
