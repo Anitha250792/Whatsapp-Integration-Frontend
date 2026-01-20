@@ -40,13 +40,15 @@ const Login = () => {
 
   /* 🔐 GOOGLE LOGIN — REDIRECT (CORRECT WAY) */
   const googleLogin = () => {
-    window.location.href = `${API}/accounts/google/login/`;
-  };
+  window.location.href =
+    "https://whatsapp-integration-u7tq.onrender.com/accounts/google/login/?process=login";
+};
 
-  /* 🔐 FACEBOOK LOGIN — REDIRECT (CORRECT WAY) */
-  const facebookLogin = () => {
-    window.location.href = `${API}/accounts/facebook/login/`;
-  };
+const facebookLogin = () => {
+  window.location.href =
+    "https://whatsapp-integration-u7tq.onrender.com/accounts/facebook/login/?process=login";
+};
+
 
   return (
     <div className="login-page">
@@ -55,14 +57,15 @@ const Login = () => {
 
         {/* 🔹 Social Login */}
         <div className="social-grid">
-          <button className="google-btn" onClick={googleLogin}>
-            Sign in with Google
-          </button>
+  <button className="google-btn" onClick={googleLogin}>
+    Login with Google
+  </button>
 
-          <button className="facebook-btn" onClick={facebookLogin}>
-            <FaFacebook /> Facebook
-          </button>
-        </div>
+  <button className="facebook-btn" onClick={facebookLogin}>
+    Login with Facebook
+  </button>
+</div>
+
 
         <div className="divider">or</div>
 
