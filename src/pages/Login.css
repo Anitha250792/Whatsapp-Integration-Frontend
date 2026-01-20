@@ -1,3 +1,6 @@
+* {
+  box-sizing: border-box;
+}
 /* full background */
 .login-page {
   min-height: 100vh;
@@ -130,5 +133,82 @@
 
 .facebook-btn:hover {
   background: #166fe5;
+}
+
+/* =========================
+   📱 Small devices (phones)
+   ========================= */
+@media (max-width: 480px) {
+  .login-page {
+    padding: 16px;
+  }
+
+  .login-card {
+    width: 100%;
+    padding: 20px;
+    border-radius: 12px;
+  }
+
+  .login-title {
+    font-size: 20px;
+    margin-bottom: 18px;
+  }
+
+  .login-card input {
+    width: 100%;
+    font-size: 14px;
+  }
+
+  .password-field span {
+    top: 38px;
+    right: 12px;
+  }
+
+  .login-btn,
+  .google-btn,
+  .facebook-btn {
+    padding: 11px;
+    font-size: 14px;
+  }
+
+  /* Stack social buttons */
+  .social-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .divider,
+  .forgot,
+  .register-text {
+    font-size: 13px;
+  }
+}
+
+/* =========================
+   📱 Tablets & large phones
+   ========================= */
+@media (max-width: 768px) {
+  .login-card {
+    width: 90%;
+    max-width: 420px;
+  }
+
+  .login-title {
+    font-size: 22px;
+  }
+
+  .login-btn,
+  .google-btn,
+  .facebook-btn {
+    font-size: 15px;
+  }
+}
+
+/* =========================
+   💻 Small laptops (optional)
+   ========================= */
+@media (max-width: 1024px) {
+  .login-card {
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.22);
+  }
 }
 
