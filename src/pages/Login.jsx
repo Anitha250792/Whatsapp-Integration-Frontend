@@ -40,14 +40,14 @@ const Login = () => {
 
   /* 🔐 GOOGLE LOGIN — REDIRECT (CORRECT WAY) */
   const googleLogin = () => {
-  window.location.href =
-    "https://whatsapp-integration-u7tq.onrender.com/accounts/google/login/?process=login";
-};
+    window.location.href =
+      "https://whatsapp-integration-u7tq.onrender.com/accounts/google/login/";
+  };
 
-const facebookLogin = () => {
-  window.location.href =
-    "https://whatsapp-integration-u7tq.onrender.com/accounts/facebook/login/?process=login";
-};
+  const facebookLogin = () => {
+    window.location.href =
+      "https://whatsapp-integration-u7tq.onrender.com/accounts/facebook/login/";
+  };
 
 
   return (
