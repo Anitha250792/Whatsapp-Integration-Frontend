@@ -1,78 +1,64 @@
 import { useState } from "react";
-import axios from "axios";
-import { FaEye, FaEyeSlash, FaFacebook } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
-import { GoogleLogin } from "@react-oauth/google";
-import bgImage from "../assets/bg-file-convert.jpg";
+import axios from "axios";
+import { FaFacebook, FaEye, FaEyeSlash } from "react-icons/fa";
 import "./Login.css";
-import { API_BASE_URL } from "../config";
+
+const API = "https://whatsapp-integration-u7tq.onrender.com";
 
 const Login = () => {
   const navigate = useNavigate();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  /* 🔐 Local login */
+  /* 🔐 LOCAL LOGIN */
   const handleLogin = async (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError("");
+
     try {
-      const res = await axios.post(`${API_BASE_URL}/auth/login/`, {
+      const res = await axios.post(`${API}/accounts/login/`, {
         email,
         password,
       });
 
       localStorage.setItem("access", res.data.access);
       localStorage.setItem("refresh", res.data.refresh);
-      navigate("/dashboard");
-    } catch {
-      alert("Invalid email or password");
-    }
-  };
 
-  /* 🔐 Google Login */
-  const handleGoogleSuccess = async (credentialResponse) => {
-    try {
-      const res = await axios.post(
-        "https://whatsapp-integration-u7tq.onrender.com/accounts/google/",
-        { token: credentialResponse.credential }
-      );
-
-      localStorage.setItem("access", res.data.access);
-      localStorage.setItem("refresh", res.data.refresh);
       navigate("/dashboard");
     } catch (err) {
-      console.error(err);
-      alert("Google login failed");
+      setError("Invalid email or password");
+    } finally {
+      setLoading(false);
     }
   };
 
-  /* 🔵 Facebook Login (redirect-based – SAFE) */
+  /* 🔐 GOOGLE LOGIN — REDIRECT (CORRECT WAY) */
+  const googleLogin = () => {
+    window.location.href = `${API}/accounts/google/login/`;
+  };
+
+  /* 🔐 FACEBOOK LOGIN — REDIRECT (CORRECT WAY) */
   const facebookLogin = () => {
-    window.location.href =
-      "https://whatsapp-integration-u7tq.onrender.com/accounts/facebook/login/";
+    window.location.href = `${API}/accounts/facebook/login/`;
   };
 
   return (
-    <div
-      className="login-page"
-      style={{
-        backgroundImage: `linear-gradient(rgba(0,0,0,.45), rgba(0,0,0,.45)), url(${bgImage})`,
-      }}
-    >
+    <div className="login-page">
       <div className="login-card">
-        <h3 className="login-title">Login</h3>
+        <h2 className="login-title">Login</h2>
 
-        {/* 🔘 SOCIAL LOGIN ROW */}
+        {/* 🔹 Social Login */}
         <div className="social-grid">
-          {/* Google */}
-          <GoogleLogin
-            onSuccess={handleGoogleSuccess}
-            onError={() => alert("Google Login Failed")}
-            useOneTap={false}
-          />
+          <button className="google-btn" onClick={googleLogin}>
+            Sign in with Google
+          </button>
 
-          {/* Facebook */}
           <button className="facebook-btn" onClick={facebookLogin}>
             <FaFacebook /> Facebook
           </button>
@@ -80,20 +66,22 @@ const Login = () => {
 
         <div className="divider">or</div>
 
-        {/* 🔐 EMAIL LOGIN */}
+        {/* 🔹 Local Login */}
         <form onSubmit={handleLogin}>
+          <label>Email</label>
           <input
             type="email"
-            placeholder="Email"
+            placeholder="Enter email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
           />
 
+          <label>Password</label>
           <div className="password-field">
             <input
               type={showPassword ? "text" : "password"}
-              placeholder="Password"
+              placeholder="Enter password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -103,11 +91,16 @@ const Login = () => {
             </span>
           </div>
 
-          <button className="login-btn">Login</button>
+          {error && <p className="error-text">{error}</p>}
+
+          <button className="login-btn" disabled={loading}>
+            {loading ? "Logging in..." : "Login"}
+          </button>
         </form>
 
-        <p className="register-text" onClick={() => navigate("/register")}>
-          Create Account
+        <p className="register-text">
+          Don’t have an account?{" "}
+          <span onClick={() => navigate("/register")}>Create Account</span>
         </p>
       </div>
     </div>
