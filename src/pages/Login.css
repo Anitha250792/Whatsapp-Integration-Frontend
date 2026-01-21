@@ -172,13 +172,13 @@
 }
 /* Google button wrapper fix */
 .google-wrapper {
-  width: 100%;
+  width: 90%;
   display: flex;
   justify-content: center;
 }
 
 .google-wrapper iframe {
-  width: 100% !important;
+  width: 90% !important;
 }
 
 /* Match social button heights */
