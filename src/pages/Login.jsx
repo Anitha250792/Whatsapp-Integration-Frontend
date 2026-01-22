@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import { FaEye, FaEyeSlash, FaFacebook } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
@@ -14,7 +14,9 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  /* 🔐 Email / Password Login */
+  /* ------------------------------------
+     🔐 Email / Password Login
+  ------------------------------------ */
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
@@ -26,12 +28,14 @@ const Login = () => {
       localStorage.setItem("access", res.data.access);
       localStorage.setItem("refresh", res.data.refresh);
       navigate("/dashboard");
-    } catch (err) {
+    } catch {
       alert("Invalid email or password");
     }
   };
 
-  /* 🔐 Google Login (JWT-based) */
+  /* ------------------------------------
+     🔐 Google Login (JWT – unchanged)
+  ------------------------------------ */
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
       const res = await axios.post(
@@ -48,11 +52,61 @@ const Login = () => {
     }
   };
 
-  /* 🔵 Facebook Login (redirect-based – safe) */
-  const facebookLogin = () => {
-    window.location.href =
-      "https://whatsapp-integration-u7tq.onrender.com/accounts/facebook/login/";
+  /* ------------------------------------
+     🔵 Facebook Login (JWT – NO redirect)
+  ------------------------------------ */
+  const handleFacebookLogin = () => {
+    if (!window.FB) {
+      alert("Facebook SDK not loaded");
+      return;
+    }
+
+    window.FB.login(
+      async (response) => {
+        if (response.authResponse) {
+          try {
+            const res = await axios.post(
+              "https://whatsapp-integration-u7tq.onrender.com/accounts/facebook/",
+              {
+                access_token: response.authResponse.accessToken,
+              }
+            );
+
+            localStorage.setItem("access", res.data.access);
+            localStorage.setItem("refresh", res.data.refresh);
+            navigate("/dashboard");
+          } catch (err) {
+            console.error(err);
+            alert("Facebook login failed");
+          }
+        } else {
+          alert("Facebook login cancelled");
+        }
+      },
+      { scope: "email,public_profile" }
+    );
   };
+
+  /* ------------------------------------
+     📦 Load Facebook SDK once
+  ------------------------------------ */
+  useEffect(() => {
+    if (window.FB) return;
+
+    window.fbAsyncInit = function () {
+      window.FB.init({
+        appId: "855828883746213",
+        cookie: true,
+        xfbml: false,
+        version: "v19.0",
+      });
+    };
+
+    const script = document.createElement("script");
+    script.src = "https://connect.facebook.net/en_US/sdk.js";
+    script.async = true;
+    document.body.appendChild(script);
+  }, []);
 
   return (
     <div
@@ -82,7 +136,7 @@ const Login = () => {
           <button
             type="button"
             className="facebook-btn"
-            onClick={facebookLogin}
+            onClick={handleFacebookLogin}
           >
             <FaFacebook /> Facebook
           </button>
