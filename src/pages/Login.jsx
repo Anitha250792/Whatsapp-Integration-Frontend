@@ -47,52 +47,71 @@ const Login = () => {
     }
   };
 
-  /* 🔵 Facebook login (JS SDK) */
-  const handleFacebookLogin = () => {
-    if (!window.FB) {
-      alert("Facebook SDK not loaded");
-      return;
-    }
+ /* ------------------------------------
+   🔵 Facebook Login (JWT – NO redirect)
+------------------------------------ */
+const handleFacebookResponse = (response) => {
+  if (!response.authResponse) {
+    alert("Facebook login cancelled");
+    return;
+  }
 
-    window.FB.login(
-      async (response) => {
-        if (response.authResponse) {
-          try {
-            const res = await axios.post(
-              "https://whatsapp-integration-u7tq.onrender.com/accounts/facebook/",
-              { access_token: response.authResponse.accessToken }
-            );
+  const accessToken = response.authResponse.accessToken;
 
-            localStorage.setItem("access", res.data.access);
-            localStorage.setItem("refresh", res.data.refresh);
-            navigate("/dashboard");
-          } catch {
-            alert("Facebook login failed");
-          }
-        }
-      },
-      { scope: "email,public_profile" }
+  // call async function safely
+  loginWithFacebookToken(accessToken);
+};
+
+const loginWithFacebookToken = async (accessToken) => {
+  try {
+    const res = await axios.post(
+      "https://whatsapp-integration-u7tq.onrender.com/accounts/facebook/",
+      {
+        access_token: accessToken,
+      }
     );
-  };
+
+    localStorage.setItem("access", res.data.access);
+    localStorage.setItem("refresh", res.data.refresh);
+    navigate("/dashboard");
+  } catch (err) {
+    console.error(err);
+    alert("Facebook login failed");
+  }
+};
+
+const handleFacebookLogin = () => {
+  if (!window.FB) {
+    alert("Facebook SDK not loaded");
+    return;
+  }
+
+  window.FB.login(
+    handleFacebookResponse, // ✅ NOT async
+    { scope: "email,public_profile" }
+  );
+};
+
 
   /* Load Facebook SDK */
   useEffect(() => {
-    if (window.FB) return;
+  if (window.FB) return;
 
-    window.fbAsyncInit = function () {
-      window.FB.init({
-        appId: "855828883746213",
-        cookie: true,
-        xfbml: false,
-        version: "v19.0",
-      });
-    };
+  window.fbAsyncInit = function () {
+    window.FB.init({
+      appId: "855828883746213",
+      cookie: true,
+      xfbml: false,
+      version: "v19.0",
+    });
+  };
 
-    const script = document.createElement("script");
-    script.src = "https://connect.facebook.net/en_US/sdk.js";
-    script.async = true;
-    document.body.appendChild(script);
-  }, []);
+  const script = document.createElement("script");
+  script.src = "https://connect.facebook.net/en_US/sdk.js";
+  script.async = true;
+  script.defer = true;
+  document.body.appendChild(script);
+}, []);
 
   return (
     <div
