@@ -14,9 +14,7 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  /* ======================
-     Email / Password
-  ====================== */
+  /* 🔐 Email login */
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
@@ -33,9 +31,7 @@ const Login = () => {
     }
   };
 
-  /* ======================
-     Google Login (UNCHANGED)
-  ====================== */
+  /* 🔐 Google login */
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
       const res = await axios.post(
@@ -51,32 +47,35 @@ const Login = () => {
     }
   };
 
-  /* ======================
-     Facebook Login (JWT)
-  ====================== */
+  /* 🔵 Facebook login (JS SDK) */
   const handleFacebookLogin = () => {
-    window.FB.login((response) => {
-      if (response.authResponse) {
-        axios
-          .post(
-            "https://whatsapp-integration-u7tq.onrender.com/accounts/facebook/",
-            {
-              access_token: response.authResponse.accessToken,
-            }
-          )
-          .then((res) => {
+    if (!window.FB) {
+      alert("Facebook SDK not loaded");
+      return;
+    }
+
+    window.FB.login(
+      async (response) => {
+        if (response.authResponse) {
+          try {
+            const res = await axios.post(
+              "https://whatsapp-integration-u7tq.onrender.com/accounts/facebook/",
+              { access_token: response.authResponse.accessToken }
+            );
+
             localStorage.setItem("access", res.data.access);
             localStorage.setItem("refresh", res.data.refresh);
             navigate("/dashboard");
-          })
-          .catch(() => alert("Facebook login failed"));
-      }
-    }, { scope: "email,public_profile" });
+          } catch {
+            alert("Facebook login failed");
+          }
+        }
+      },
+      { scope: "email,public_profile" }
+    );
   };
 
-  /* ======================
-     Load Facebook SDK
-  ====================== */
+  /* Load Facebook SDK */
   useEffect(() => {
     if (window.FB) return;
 
@@ -105,20 +104,32 @@ const Login = () => {
       <div className="login-card">
         <h3 className="login-title">Login</h3>
 
+        {/* 🔘 SOCIAL LOGIN */}
         <div className="social-grid">
-          <GoogleLogin
-            onSuccess={handleGoogleSuccess}
-            onError={() => alert("Google Login Failed")}
-            useOneTap={false}
-          />
+          {/* Google */}
+          <div className="social-item">
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={() => alert("Google Login Failed")}
+              useOneTap={false}
+              size="large"
+              width="100%"
+            />
+          </div>
 
-          <button className="facebook-btn" onClick={handleFacebookLogin}>
+          {/* Facebook */}
+          <button
+            type="button"
+            className="facebook-btn social-item"
+            onClick={handleFacebookLogin}
+          >
             <FaFacebook /> Facebook
           </button>
         </div>
 
         <div className="divider">or</div>
 
+        {/* 🔐 EMAIL LOGIN */}
         <form onSubmit={handleLogin}>
           <input
             type="email"
