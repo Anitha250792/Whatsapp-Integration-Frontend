@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import { FaEye, FaEyeSlash, FaFacebook } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
@@ -14,9 +14,9 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  /* ------------------------------------
-     🔐 Email / Password Login (UNCHANGED)
-  ------------------------------------ */
+  /* ======================
+     Email / Password
+  ====================== */
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
@@ -33,9 +33,9 @@ const Login = () => {
     }
   };
 
-  /* ------------------------------------
-     🔐 Google Login (UNCHANGED)
-  ------------------------------------ */
+  /* ======================
+     Google Login (UNCHANGED)
+  ====================== */
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
       const res = await axios.post(
@@ -46,55 +46,37 @@ const Login = () => {
       localStorage.setItem("access", res.data.access);
       localStorage.setItem("refresh", res.data.refresh);
       navigate("/dashboard");
-    } catch (err) {
-      console.error(err);
+    } catch {
       alert("Google login failed");
     }
   };
 
-  /* ------------------------------------
-     🔵 Facebook JWT helper (ASYNC)
-  ------------------------------------ */
-  const facebookJwtLogin = async (accessToken) => {
-    try {
-      const res = await axios.post(
-        "https://whatsapp-integration-u7tq.onrender.com/accounts/facebook/",
-        { access_token: accessToken }
-      );
-
-      localStorage.setItem("access", res.data.access);
-      localStorage.setItem("refresh", res.data.refresh);
-      navigate("/dashboard");
-    } catch (err) {
-      console.error(err);
-      alert("Facebook login failed");
-    }
-  };
-
-  /* ------------------------------------
-     🔵 Facebook Login (SYNC callback ✔️)
-  ------------------------------------ */
+  /* ======================
+     Facebook Login (JWT)
+  ====================== */
   const handleFacebookLogin = () => {
-    if (!window.FB) {
-      alert("Facebook SDK not loaded");
-      return;
-    }
-
-    window.FB.login(
-      function (response) {
-        if (response.authResponse) {
-          facebookJwtLogin(response.authResponse.accessToken);
-        } else {
-          alert("Facebook login cancelled");
-        }
-      },
-      { scope: "email,public_profile" }
-    );
+    window.FB.login((response) => {
+      if (response.authResponse) {
+        axios
+          .post(
+            "https://whatsapp-integration-u7tq.onrender.com/accounts/facebook/",
+            {
+              access_token: response.authResponse.accessToken,
+            }
+          )
+          .then((res) => {
+            localStorage.setItem("access", res.data.access);
+            localStorage.setItem("refresh", res.data.refresh);
+            navigate("/dashboard");
+          })
+          .catch(() => alert("Facebook login failed"));
+      }
+    }, { scope: "email,public_profile" });
   };
 
-  /* ------------------------------------
-     📦 Load Facebook SDK once
-  ------------------------------------ */
+  /* ======================
+     Load Facebook SDK
+  ====================== */
   useEffect(() => {
     if (window.FB) return;
 
@@ -110,7 +92,6 @@ const Login = () => {
     const script = document.createElement("script");
     script.src = "https://connect.facebook.net/en_US/sdk.js";
     script.async = true;
-    script.defer = true;
     document.body.appendChild(script);
   }, []);
 
@@ -124,33 +105,20 @@ const Login = () => {
       <div className="login-card">
         <h3 className="login-title">Login</h3>
 
-        {/* 🔘 SOCIAL LOGIN */}
         <div className="social-grid">
-          {/* Google */}
-          <div className="google-wrapper">
-            <GoogleLogin
-              onSuccess={handleGoogleSuccess}
-              onError={() => alert("Google Login Failed")}
-              useOneTap={false}
-              theme="outline"
-              size="large"
-              width="100%"
-            />
-          </div>
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={() => alert("Google Login Failed")}
+            useOneTap={false}
+          />
 
-          {/* Facebook */}
-          <button
-            type="button"
-            className="facebook-btn"
-            onClick={handleFacebookLogin}
-          >
+          <button className="facebook-btn" onClick={handleFacebookLogin}>
             <FaFacebook /> Facebook
           </button>
         </div>
 
         <div className="divider">or</div>
 
-        {/* 🔐 EMAIL LOGIN */}
         <form onSubmit={handleLogin}>
           <input
             type="email"
@@ -173,16 +141,10 @@ const Login = () => {
             </span>
           </div>
 
-          <button type="submit" className="login-btn">
-            Login
-          </button>
+          <button className="login-btn">Login</button>
         </form>
 
-        <p
-          className="register-text"
-          onClick={() => navigate("/register")}
-          style={{ cursor: "pointer" }}
-        >
+        <p className="register-text" onClick={() => navigate("/register")}>
           Create Account
         </p>
       </div>
