@@ -15,7 +15,7 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
 
   /* ------------------------------------
-     🔐 Email / Password Login
+     🔐 Email / Password Login (UNCHANGED)
   ------------------------------------ */
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -34,7 +34,7 @@ const Login = () => {
   };
 
   /* ------------------------------------
-     🔐 Google Login (JWT – unchanged)
+     🔐 Google Login (UNCHANGED)
   ------------------------------------ */
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
@@ -53,7 +53,26 @@ const Login = () => {
   };
 
   /* ------------------------------------
-     🔵 Facebook Login (JWT – NO redirect)
+     🔵 Facebook JWT helper (ASYNC)
+  ------------------------------------ */
+  const facebookJwtLogin = async (accessToken) => {
+    try {
+      const res = await axios.post(
+        "https://whatsapp-integration-u7tq.onrender.com/accounts/facebook/",
+        { access_token: accessToken }
+      );
+
+      localStorage.setItem("access", res.data.access);
+      localStorage.setItem("refresh", res.data.refresh);
+      navigate("/dashboard");
+    } catch (err) {
+      console.error(err);
+      alert("Facebook login failed");
+    }
+  };
+
+  /* ------------------------------------
+     🔵 Facebook Login (SYNC callback ✔️)
   ------------------------------------ */
   const handleFacebookLogin = () => {
     if (!window.FB) {
@@ -62,23 +81,9 @@ const Login = () => {
     }
 
     window.FB.login(
-      async (response) => {
+      function (response) {
         if (response.authResponse) {
-          try {
-            const res = await axios.post(
-              "https://whatsapp-integration-u7tq.onrender.com/accounts/facebook/",
-              {
-                access_token: response.authResponse.accessToken,
-              }
-            );
-
-            localStorage.setItem("access", res.data.access);
-            localStorage.setItem("refresh", res.data.refresh);
-            navigate("/dashboard");
-          } catch (err) {
-            console.error(err);
-            alert("Facebook login failed");
-          }
+          facebookJwtLogin(response.authResponse.accessToken);
         } else {
           alert("Facebook login cancelled");
         }
@@ -105,6 +110,7 @@ const Login = () => {
     const script = document.createElement("script");
     script.src = "https://connect.facebook.net/en_US/sdk.js";
     script.async = true;
+    script.defer = true;
     document.body.appendChild(script);
   }, []);
 
