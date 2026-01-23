@@ -96,17 +96,18 @@ const Dashboard = () => {
 
   /* ⬇ Download helper */
   const downloadFile = async (url, filename) => {
-    const res = await axios.post(url, {}, {
-      headers: { Authorization: `Bearer ${token}` },
-      responseType: "blob",
-    });
+  const res = await axios.get(url, {
+    headers: { Authorization: `Bearer ${token}` },
+    responseType: "blob",
+  });
 
-    const blob = new Blob([res.data]);
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = filename;
-    link.click();
-  };
+  const blob = new Blob([res.data]);
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+  link.click();
+};
+
 
   /* 🔄 Convert */
   const convertWordToPDF = (id) =>
@@ -174,11 +175,11 @@ const Dashboard = () => {
   };
 
   /* 📲 Share */
-  const shareWhatsApp = (id, filename) => {
-    const link = `${API}/files/download/${id}/`;
-    const msg = `📄 ${filename}\nDownload:\n${link}`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`);
-  };
+ const shareWhatsApp = (file) => {
+  const msg = `📄 ${file.filename}\nDownload:\n${file.public_url}`;
+  window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`);
+};
+
 
   const shareGmail = (file) => {
     const link = `${API}/files/download/${file.id}/`;
