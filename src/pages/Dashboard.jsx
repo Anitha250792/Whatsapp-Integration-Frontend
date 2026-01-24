@@ -12,15 +12,6 @@ import "./Dashboard.css";
 
 const API = "https://whatsapp-integration-u7tq.onrender.com";
 
-/* 🔓 Decode JWT safely */
-const getUserFromToken = (token) => {
-  try {
-    return JSON.parse(atob(token.split(".")[1]));
-  } catch {
-    return null;
-  }
-};
-
 /* 🅰️ Generate initials */
 const getInitials = (name = "") => {
   if (!name) return "U";
@@ -44,25 +35,20 @@ const Dashboard = () => {
 
   const token = localStorage.getItem("access");
 
-  /* 🔐 Protect dashboard + load user */
-  useEffect(() => {
-    if (!token) {
-      navigate("/login");
-      return;
+  /* 👤 Fetch logged-in user */
+  const fetchUserProfile = async () => {
+    try {
+      const res = await axios.get(`${API}/dj-rest-auth/user/`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const name = res.data.username || res.data.email || "User";
+      setUsername(name);
+      setInitials(getInitials(name));
+    } catch (err) {
+      console.error("User fetch failed");
     }
-
-    const user = getUserFromToken(token);
-    const name =
-      user?.username ||
-      user?.email ||
-      user?.name ||
-      "User";
-
-    setUsername(name);
-    setInitials(getInitials(name));
-
-    fetchFiles();
-  }, []);
+  };
 
   /* 📂 Fetch files */
   const fetchFiles = async () => {
@@ -80,6 +66,17 @@ const Dashboard = () => {
       setLoading(false);
     }
   };
+
+  /* 🔐 Protect dashboard */
+  useEffect(() => {
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+
+    fetchUserProfile(); // ✅ USERNAME FIX
+    fetchFiles();
+  }, []);
 
   /* ⬆ Upload */
   const handleUpload = async (e) => {
@@ -105,9 +102,7 @@ const Dashboard = () => {
   /* ☑ Select */
   const toggleSelect = (id) => {
     setSelectedIds((prev) =>
-      prev.includes(id)
-        ? prev.filter((x) => x !== id)
-        : [...prev, id]
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
     );
   };
 
@@ -122,25 +117,36 @@ const Dashboard = () => {
     fetchFiles();
   };
 
-  /* ⬇ Download */
-  const downloadFile = async (url, filename) => {
-    const res = await axios.get(url, {
-      headers: { Authorization: `Bearer ${token}` },
-      responseType: "blob",
-    });
-
+  /* ⬇ Download helper */
+  const downloadBlob = (data, filename) => {
     const link = document.createElement("a");
-    link.href = URL.createObjectURL(new Blob([res.data]));
+    link.href = URL.createObjectURL(new Blob([data]));
     link.download = filename;
     link.click();
   };
 
   /* 🔄 Convert */
-  const convertWordToPDF = (id) =>
-    downloadFile(`${API}/files/convert/word-to-pdf/${id}/`, "converted.pdf");
+  const convertWordToPDF = async (id) => {
+    const res = await axios.get(
+      `${API}/files/convert/word-to-pdf/${id}/`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: "blob",
+      }
+    );
+    downloadBlob(res.data, "converted.pdf");
+  };
 
-  const convertPDFToWord = (id) =>
-    downloadFile(`${API}/files/convert/pdf-to-word/${id}/`, "converted.docx");
+  const convertPDFToWord = async (id) => {
+    const res = await axios.get(
+      `${API}/files/convert/pdf-to-word/${id}/`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: "blob",
+      }
+    );
+    downloadBlob(res.data, "converted.docx");
+  };
 
   /* 🧩 Merge */
   const mergePDFs = async () => {
@@ -191,13 +197,6 @@ const Dashboard = () => {
     );
 
     downloadBlob(res.data, "signed.pdf");
-  };
-
-  const downloadBlob = (data, filename) => {
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(new Blob([data]));
-    link.download = filename;
-    link.click();
   };
 
   /* 📲 Share */
