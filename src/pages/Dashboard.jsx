@@ -55,21 +55,32 @@ const Dashboard = () => {
 
   /* 📂 Fetch files */
   const fetchFiles = async () => {
-    try {
-      const res = await await axios.get(`${API}/dj-rest-auth/user/`, {
-  headers: { Authorization: `Bearer ${token}` },
-});
+  try {
+    const res = await axios.get(`${API}/files/`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
 
+    // ✅ SAFETY CHECK
+    if (Array.isArray(res.data)) {
       setFiles(res.data);
-    } catch (err) {
-      if (err.response?.status === 401) {
-        localStorage.clear();
-        navigate("/login");
-      }
-    } finally {
-      setLoading(false);
+    } else {
+      console.error("Files API did not return an array:", res.data);
+      setFiles([]); // prevent crash
     }
-  };
+  } catch (err) {
+    console.error("Fetch files failed:", err);
+
+    setFiles([]); // prevent .map crash
+
+    if (err.response?.status === 401) {
+      localStorage.clear();
+      navigate("/login");
+    }
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   /* 🔐 Protect dashboard */
   useEffect(() => {
@@ -270,7 +281,8 @@ const Dashboard = () => {
         <div className="file-list">
           {files.length === 0 && <p>No files uploaded</p>}
 
-          {files.map((file) => (
+          {Array.isArray(files) && files.map((file) => (
+
             <div className="file-card" key={file.id}>
               <input
                 type="checkbox"
