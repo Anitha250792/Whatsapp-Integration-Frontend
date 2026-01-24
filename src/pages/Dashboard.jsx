@@ -211,10 +211,10 @@ const Dashboard = () => {
 
   /* 📲 Share */
   const shareWhatsApp = (file) => {
-    const link = `${API}/files/download/${file.id}/`;
-    const msg = `📄 ${file.filename}\nDownload:\n${link}`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`);
-  };
+  const msg = `📄 ${file.filename}\nDownload:\n${file.public_url}`;
+  window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`);
+};
+
 
   const shareGmail = (file) => {
     const link = `${API}/files/download/${file.id}/`;
