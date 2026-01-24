@@ -60,27 +60,21 @@ const Dashboard = () => {
       headers: { Authorization: `Bearer ${token}` },
     });
 
-    // ✅ SAFETY CHECK
+    console.log("FILES API RESPONSE:", res.data);
+
     if (Array.isArray(res.data)) {
       setFiles(res.data);
     } else {
-      console.error("Files API did not return an array:", res.data);
-      setFiles([]); // prevent crash
+      console.error("Expected array, got:", res.data);
+      setFiles([]);
     }
   } catch (err) {
     console.error("Fetch files failed:", err);
-
-    setFiles([]); // prevent .map crash
-
-    if (err.response?.status === 401) {
-      localStorage.clear();
-      navigate("/login");
-    }
+    setFiles([]);
   } finally {
     setLoading(false);
   }
 };
-
 
   /* 🔐 Protect dashboard */
   useEffect(() => {
