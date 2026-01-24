@@ -53,9 +53,10 @@ const Dashboard = () => {
   /* 📂 Fetch files */
   const fetchFiles = async () => {
     try {
-      const res = await axios.get(`${API}/files/`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await await axios.get(`${API}/dj-rest-auth/user/`, {
+  headers: { Authorization: `Bearer ${token}` },
+});
+
       setFiles(res.data);
     } catch (err) {
       if (err.response?.status === 401) {
