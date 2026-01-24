@@ -12,7 +12,7 @@ import "./Dashboard.css";
 
 const API = "https://whatsapp-integration-u7tq.onrender.com";
 
-/* 🔓 Decode JWT */
+/* 🔓 Decode JWT safely */
 const getUserFromToken = (token) => {
   try {
     return JSON.parse(atob(token.split(".")[1]));
@@ -39,12 +39,12 @@ const Dashboard = () => {
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  const [username, setUsername] = useState("");
-  const [initials, setInitials] = useState("");
+  const [username, setUsername] = useState("User");
+  const [initials, setInitials] = useState("U");
 
   const token = localStorage.getItem("access");
 
-  /* 🔐 Protect dashboard */
+  /* 🔐 Protect dashboard + load user */
   useEffect(() => {
     if (!token) {
       navigate("/login");
@@ -52,7 +52,11 @@ const Dashboard = () => {
     }
 
     const user = getUserFromToken(token);
-    const name = user?.name || user?.email || "User";
+    const name =
+      user?.username ||
+      user?.email ||
+      user?.name ||
+      "User";
 
     setUsername(name);
     setInitials(getInitials(name));
@@ -101,16 +105,20 @@ const Dashboard = () => {
   /* ☑ Select */
   const toggleSelect = (id) => {
     setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
+      prev.includes(id)
+        ? prev.filter((x) => x !== id)
+        : [...prev, id]
     );
   };
 
   /* ❌ Delete */
   const deleteFile = async (id) => {
     if (!window.confirm("Delete this file?")) return;
+
     await axios.delete(`${API}/files/delete/${id}/`, {
       headers: { Authorization: `Bearer ${token}` },
     });
+
     fetchFiles();
   };
 
@@ -134,16 +142,77 @@ const Dashboard = () => {
   const convertPDFToWord = (id) =>
     downloadFile(`${API}/files/convert/pdf-to-word/${id}/`, "converted.docx");
 
+  /* 🧩 Merge */
+  const mergePDFs = async () => {
+    if (selectedIds.length < 2)
+      return alert("Select at least 2 PDFs");
+
+    const res = await axios.post(
+      `${API}/files/merge/`,
+      { file_ids: selectedIds },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: "blob",
+      }
+    );
+
+    downloadBlob(res.data, "merged.pdf");
+  };
+
+  /* ✂ Split */
+  const splitPDF = async () => {
+    if (selectedIds.length !== 1)
+      return alert("Select exactly one PDF");
+
+    const res = await axios.post(
+      `${API}/files/split/${selectedIds[0]}/`,
+      {},
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: "blob",
+      }
+    );
+
+    downloadBlob(res.data, "split.zip");
+  };
+
+  /* ✍ Sign */
+  const signPDF = async () => {
+    if (!signer || selectedIds.length !== 1)
+      return alert("Signer name required");
+
+    const res = await axios.post(
+      `${API}/files/sign/${selectedIds[0]}/`,
+      { signer },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: "blob",
+      }
+    );
+
+    downloadBlob(res.data, "signed.pdf");
+  };
+
+  const downloadBlob = (data, filename) => {
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(new Blob([data]));
+    link.download = filename;
+    link.click();
+  };
+
   /* 📲 Share */
   const shareWhatsApp = (file) => {
-    const msg = `📄 ${file.filename}\nDownload:\n${file.public_url}`;
+    const link = `${API}/files/download/${file.id}/`;
+    const msg = `📄 ${file.filename}\nDownload:\n${link}`;
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`);
   };
 
   const shareGmail = (file) => {
     const link = `${API}/files/download/${file.id}/`;
     window.open(
-      `https://mail.google.com/mail/?view=cm&fs=1&body=${encodeURIComponent(link)}`
+      `https://mail.google.com/mail/?view=cm&fs=1&body=${encodeURIComponent(
+        link
+      )}`
     );
   };
 
@@ -176,11 +245,26 @@ const Dashboard = () => {
         {uploading && <span>Uploading...</span>}
       </div>
 
+      {/* ===== BULK ACTIONS ===== */}
+      <div className="bulk-actions">
+        <button onClick={mergePDFs}>Merge PDFs</button>
+        <button onClick={splitPDF}>Split PDF</button>
+
+        <input
+          placeholder="Signer name"
+          value={signer}
+          onChange={(e) => setSigner(e.target.value)}
+        />
+        <button onClick={signPDF}>Sign PDF</button>
+      </div>
+
       {/* ===== FILE LIST ===== */}
       {loading ? (
         <p className="loading">Loading files...</p>
       ) : (
         <div className="file-list">
+          {files.length === 0 && <p>No files uploaded</p>}
+
           {files.map((file) => (
             <div className="file-card" key={file.id}>
               <input
@@ -204,11 +288,13 @@ const Dashboard = () => {
                     Word → PDF
                   </button>
                 )}
+
                 {file.filename.endsWith(".pdf") && (
                   <button onClick={() => convertPDFToWord(file.id)}>
                     PDF → Word
                   </button>
                 )}
+
                 <FaWhatsapp onClick={() => shareWhatsApp(file)} />
                 <FaEnvelope onClick={() => shareGmail(file)} />
                 <FaTrash onClick={() => deleteFile(file.id)} />
