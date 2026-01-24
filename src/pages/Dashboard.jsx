@@ -37,18 +37,21 @@ const Dashboard = () => {
 
   /* 👤 Fetch logged-in user */
   const fetchUserProfile = async () => {
-    try {
-      const res = await axios.get(`${API}/dj-rest-auth/user/`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+  try {
+    const res = await axios.get(`${API}/dj-rest-auth/user/`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
 
-      const name = res.data.username || res.data.email || "User";
-      setUsername(name);
-      setInitials(getInitials(name));
-    } catch (err) {
-      console.error("User fetch failed");
-    }
-  };
+    const name = res.data.username || res.data.email || "User";
+    setUsername(name);
+    setInitials(getInitials(name));
+  } catch (err) {
+    console.error("User fetch failed", err);
+  }
+};
+
 
   /* 📂 Fetch files */
   const fetchFiles = async () => {
@@ -70,14 +73,15 @@ const Dashboard = () => {
 
   /* 🔐 Protect dashboard */
   useEffect(() => {
-    if (!token) {
-      navigate("/login");
-      return;
-    }
+  if (!token) {
+    navigate("/login");
+    return;
+  }
 
-    fetchUserProfile(); // ✅ USERNAME FIX
-    fetchFiles();
-  }, []);
+  fetchUserProfile(); // ✅ fetch username
+  fetchFiles();       // ✅ fetch files
+}, []);
+
 
   /* ⬆ Upload */
   const handleUpload = async (e) => {
@@ -226,18 +230,19 @@ const Dashboard = () => {
     <div className="dashboard">
       {/* ===== HEADER ===== */}
       <div className="header">
-        <div className="header-left">
-          <div className="avatar">{initials}</div>
-          <div>
-            <h3>📄 File Converter Dashboard</h3>
-            <p className="username">Welcome, {username}</p>
-          </div>
-        </div>
+  <div className="header-left">
+    <div className="avatar">{initials}</div>
+    <div>
+      <h3>📄 File Converter Dashboard</h3>
+      <p className="username">Welcome, {username}</p>
+    </div>
+  </div>
 
-        <button className="logout-btn" onClick={handleLogout}>
-          Logout
-        </button>
-      </div>
+  <button className="logout-btn" onClick={handleLogout}>
+    Logout
+  </button>
+</div>
+
 
       {/* ===== UPLOAD ===== */}
       <div className="upload-box">
