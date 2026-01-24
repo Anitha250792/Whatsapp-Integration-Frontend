@@ -12,6 +12,24 @@ import "./Dashboard.css";
 
 const API = "https://whatsapp-integration-u7tq.onrender.com";
 
+/* 🔓 Decode JWT */
+const getUserFromToken = (token) => {
+  try {
+    return JSON.parse(atob(token.split(".")[1]));
+  } catch {
+    return null;
+  }
+};
+
+/* 🅰️ Generate initials */
+const getInitials = (name = "") => {
+  if (!name) return "U";
+  const parts = name.split(" ");
+  return parts.length === 1
+    ? parts[0][0].toUpperCase()
+    : (parts[0][0] + parts[1][0]).toUpperCase();
+};
+
 const Dashboard = () => {
   const navigate = useNavigate();
 
@@ -21,6 +39,9 @@ const Dashboard = () => {
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  const [username, setUsername] = useState("");
+  const [initials, setInitials] = useState("");
+
   const token = localStorage.getItem("access");
 
   /* 🔐 Protect dashboard */
@@ -29,6 +50,13 @@ const Dashboard = () => {
       navigate("/login");
       return;
     }
+
+    const user = getUserFromToken(token);
+    const name = user?.name || user?.email || "User";
+
+    setUsername(name);
+    setInitials(getInitials(name));
+
     fetchFiles();
   }, []);
 
@@ -40,7 +68,6 @@ const Dashboard = () => {
       });
       setFiles(res.data);
     } catch (err) {
-      console.error("Fetch files failed:", err);
       if (err.response?.status === 401) {
         localStorage.clear();
         navigate("/login");
@@ -56,20 +83,15 @@ const Dashboard = () => {
     if (!file) return;
 
     setUploading(true);
+    const formData = new FormData();
+    formData.append("file", file);
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-
       await axios.post(`${API}/files/upload/`, formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
-
       fetchFiles();
-    } catch (err) {
-      console.error("Upload error:", err.response || err);
+    } catch {
       alert("❌ Upload failed");
     } finally {
       setUploading(false);
@@ -86,28 +108,24 @@ const Dashboard = () => {
   /* ❌ Delete */
   const deleteFile = async (id) => {
     if (!window.confirm("Delete this file?")) return;
-
     await axios.delete(`${API}/files/delete/${id}/`, {
       headers: { Authorization: `Bearer ${token}` },
     });
-
     fetchFiles();
   };
 
-  /* ⬇ Download helper */
+  /* ⬇ Download */
   const downloadFile = async (url, filename) => {
-  const res = await axios.get(url, {
-    headers: { Authorization: `Bearer ${token}` },
-    responseType: "blob",
-  });
+    const res = await axios.get(url, {
+      headers: { Authorization: `Bearer ${token}` },
+      responseType: "blob",
+    });
 
-  const blob = new Blob([res.data]);
-  const link = document.createElement("a");
-  link.href = URL.createObjectURL(blob);
-  link.download = filename;
-  link.click();
-};
-
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(new Blob([res.data]));
+    link.download = filename;
+    link.click();
+  };
 
   /* 🔄 Convert */
   const convertWordToPDF = (id) =>
@@ -116,75 +134,16 @@ const Dashboard = () => {
   const convertPDFToWord = (id) =>
     downloadFile(`${API}/files/convert/pdf-to-word/${id}/`, "converted.docx");
 
-  /* 🧩 Merge */
-  const mergePDFs = async () => {
-    if (selectedIds.length < 2) return alert("Select at least 2 PDFs");
-
-    const res = await axios.post(
-      `${API}/files/merge/`,
-      { file_ids: selectedIds },
-      {
-        headers: { Authorization: `Bearer ${token}` },
-        responseType: "blob",
-      }
-    );
-
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(res.data);
-    link.download = "merged.pdf";
-    link.click();
-  };
-
-  /* ✂ Split */
-  const splitPDF = async () => {
-    if (selectedIds.length !== 1) return alert("Select one PDF");
-
-    const res = await axios.post(
-      `${API}/files/split/${selectedIds[0]}/`,
-      {},
-      {
-        headers: { Authorization: `Bearer ${token}` },
-        responseType: "blob",
-      }
-    );
-
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(res.data);
-    link.download = "split.zip";
-    link.click();
-  };
-
-  /* ✍ Sign */
-  const signPDF = async () => {
-    if (!signer || selectedIds.length !== 1)
-      return alert("Signer name required");
-
-    const res = await axios.post(
-      `${API}/files/sign/${selectedIds[0]}/`,
-      { signer },
-      {
-        headers: { Authorization: `Bearer ${token}` },
-        responseType: "blob",
-      }
-    );
-
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(res.data);
-    link.download = "signed.pdf";
-    link.click();
-  };
-
   /* 📲 Share */
- const shareWhatsApp = (file) => {
-  const msg = `📄 ${file.filename}\nDownload:\n${file.public_url}`;
-  window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`);
-};
-
+  const shareWhatsApp = (file) => {
+    const msg = `📄 ${file.filename}\nDownload:\n${file.public_url}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`);
+  };
 
   const shareGmail = (file) => {
     const link = `${API}/files/download/${file.id}/`;
     window.open(
-      `https://mail.google.com/mail/?view=cm&fs=1&su=File&body=${encodeURIComponent(link)}`
+      `https://mail.google.com/mail/?view=cm&fs=1&body=${encodeURIComponent(link)}`
     );
   };
 
@@ -196,36 +155,32 @@ const Dashboard = () => {
 
   return (
     <div className="dashboard">
+      {/* ===== HEADER ===== */}
       <div className="header">
-        <h3>📄 File Converter Dashboard</h3>
+        <div className="header-left">
+          <div className="avatar">{initials}</div>
+          <div>
+            <h3>📄 File Converter Dashboard</h3>
+            <p className="username">Welcome, {username}</p>
+          </div>
+        </div>
+
         <button className="logout-btn" onClick={handleLogout}>
           Logout
         </button>
       </div>
 
+      {/* ===== UPLOAD ===== */}
       <div className="upload-box">
         <input type="file" onChange={handleUpload} />
         {uploading && <span>Uploading...</span>}
       </div>
 
-      <div className="bulk-actions">
-        <button onClick={mergePDFs}>Merge PDFs</button>
-        <button onClick={splitPDF}>Split PDF</button>
-
-        <input
-          placeholder="Signer name"
-          value={signer}
-          onChange={(e) => setSigner(e.target.value)}
-        />
-        <button onClick={signPDF}>Sign PDF</button>
-      </div>
-
+      {/* ===== FILE LIST ===== */}
       {loading ? (
-        <p>Loading files...</p>
+        <p className="loading">Loading files...</p>
       ) : (
         <div className="file-list">
-          {files.length === 0 && <p>No files uploaded</p>}
-
           {files.map((file) => (
             <div className="file-card" key={file.id}>
               <input
@@ -249,14 +204,12 @@ const Dashboard = () => {
                     Word → PDF
                   </button>
                 )}
-
                 {file.filename.endsWith(".pdf") && (
                   <button onClick={() => convertPDFToWord(file.id)}>
                     PDF → Word
                   </button>
                 )}
-
-                <FaWhatsapp onClick={() => shareWhatsApp(file.id, file.filename)} />
+                <FaWhatsapp onClick={() => shareWhatsApp(file)} />
                 <FaEnvelope onClick={() => shareGmail(file)} />
                 <FaTrash onClick={() => deleteFile(file.id)} />
               </div>
