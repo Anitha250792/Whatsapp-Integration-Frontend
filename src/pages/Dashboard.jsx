@@ -38,11 +38,12 @@ const Dashboard = () => {
   /* 👤 Fetch logged-in user */
   const fetchUserProfile = async () => {
   try {
-    const res = await axios.get(`${API}/dj-rest-auth/user/`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const res = await axios.get(`${API}/files/`, {
+  headers: {
+    Authorization: `Bearer ${token}`
+  }
+});
+
 
     const name = res.data.username || res.data.email || "User";
     setUsername(name);
