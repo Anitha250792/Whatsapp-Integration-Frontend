@@ -94,8 +94,18 @@ const Login = () => {
      ⚠️ Enable ONLY after Meta approves instagram_basic
   ------------------------------------ */
   const handleInstagramLogin = () => {
-    alert("Instagram login will be enabled soon 🚧");
-  };
+  console.log("Instagram login clicked");
+
+  if (!window.FB) {
+    alert("Facebook SDK still loading, please try again");
+    return;
+  }
+
+  window.FB.login(handleFacebookResponse, {
+    scope: "email,public_profile,instagram_basic",
+  });
+};
+
 
   /* Load Facebook SDK safely */
   useEffect(() => {
@@ -155,14 +165,13 @@ const Login = () => {
 
           {/* Instagram (visible but disabled until approval) */}
           <button
-            type="button"
-            className="instagram-btn social-item"
-            disabled
-            title="Instagram login coming soon"
-            onClick={handleInstagramLogin}
-          >
-            <FaInstagram /> Instagram
-          </button>
+  type="button"
+  className="instagram-btn social-item"
+  onClick={handleInstagramLogin}
+>
+  <FaInstagram /> Instagram
+</button>
+
         </div>
 
         <div className="divider">or</div>
