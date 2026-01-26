@@ -6,8 +6,6 @@ import { GoogleLogin } from "@react-oauth/google";
 import bgImage from "../assets/bg-file-convert.jpg";
 import "./Login.css";
 import { API_BASE_URL } from "../config";
-import { FaInstagram } from "react-icons/fa";
-
 
 const Login = () => {
   const navigate = useNavigate();
@@ -90,36 +88,10 @@ const handleFacebookLogin = () => {
 
   window.FB.login(
     handleFacebookResponse, // ✅ NOT async
-    { scope: "email,public_profile,instagram_basic" }
-
+    { scope: "email,public_profile" }
   );
 };
 
-/* ------------------------------------
-   🟣 Instagram Login (via Facebook)
------------------------------------- */
-const handleInstagramLogin = () => {
-  if (!window.FB) {
-    alert("Facebook SDK not loaded");
-    return;
-  }
-
-  window.FB.login(
-    (response) => {
-      if (!response.authResponse) {
-        alert("Instagram login cancelled");
-        return;
-      }
-
-      const accessToken = response.authResponse.accessToken;
-
-      loginWithFacebookToken(accessToken); // ✅ reuse same backend
-    },
-    {
-      scope: "email,public_profile,instagram_basic",
-    }
-  );
-};
 
   /* Load Facebook SDK */
   useEffect(() => {
@@ -152,39 +124,27 @@ const handleInstagramLogin = () => {
         <h3 className="login-title">Login</h3>
 
         {/* 🔘 SOCIAL LOGIN */}
-       <div className="social-grid">
-  {/* Google */}
-  <div className="social-item">
-    <GoogleLogin
-      onSuccess={handleGoogleSuccess}
-      onError={() => alert("Google Login Failed")}
-      useOneTap={false}
-      size="large"
-      width="100%"
-    />
-  </div>
+        <div className="social-grid">
+          {/* Google */}
+          <div className="social-item">
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={() => alert("Google Login Failed")}
+              useOneTap={false}
+              size="large"
+              width="100%"
+            />
+          </div>
 
-  {/* Facebook */}
-  <button
-    type="button"
-    className="facebook-btn social-item"
-    onClick={handleFacebookLogin}
-  >
-    <FaFacebook /> Facebook
-  </button>
-
-  {/* Instagram (dev only) */}
-  {process.env.NODE_ENV === "development" && (
-    <button
-      type="button"
-      className="instagram-btn social-item"
-      onClick={handleInstagramLogin}
-    >
-      <FaInstagram /> Instagram
-    </button>
-  )}
-</div>
-
+          {/* Facebook */}
+          <button
+            type="button"
+            className="facebook-btn social-item"
+            onClick={handleFacebookLogin}
+          >
+            <FaFacebook /> Facebook
+          </button>
+        </div>
 
         <div className="divider">or</div>
 
