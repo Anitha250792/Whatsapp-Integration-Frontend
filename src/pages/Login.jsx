@@ -174,13 +174,12 @@ const handleInstagramLogin = () => {
   </button>
 
   {/* Instagram */}
-  <button
-    type="button"
-    className="instagram-btn social-item"
-    onClick={handleInstagramLogin}
-  >
+  {process.env.NODE_ENV === "development" && (
+  <button className="instagram-btn" onClick={handleInstagramLogin}>
     <FaInstagram /> Instagram
   </button>
+)}
+
         </div>
          
 
