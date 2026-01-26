@@ -91,20 +91,12 @@ const Login = () => {
 
   /* ------------------------------------
      🟣 Instagram Login (via Facebook)
-     ⚠️ Enable ONLY after Meta approves instagram_basic
+   
   ------------------------------------ */
   const handleInstagramLogin = () => {
-  console.log("Instagram login clicked");
-
-  if (!window.FB) {
-    alert("Facebook SDK still loading, please try again");
-    return;
-  }
-
-  window.FB.login(handleFacebookResponse, {
-    scope: "email,public_profile,instagram_basic",
-  });
+  alert("Instagram login coming soon");
 };
+
 
 
   /* Load Facebook SDK safely */
