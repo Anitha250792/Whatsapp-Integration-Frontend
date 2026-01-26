@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { FaEye, FaEyeSlash, FaFacebook } from "react-icons/fa";
+import { FaEye, FaEyeSlash, FaFacebook, FaInstagram } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
 import bgImage from "../assets/bg-file-convert.jpg";
@@ -47,71 +47,79 @@ const Login = () => {
     }
   };
 
- /* ------------------------------------
-   🔵 Facebook Login (JWT – NO redirect)
------------------------------------- */
-const handleFacebookResponse = (response) => {
-  if (!response.authResponse) {
-    alert("Facebook login cancelled");
-    return;
-  }
+  /* ------------------------------------
+     🔵 Facebook Login (JWT – NO redirect)
+  ------------------------------------ */
+  const handleFacebookResponse = (response) => {
+    if (!response.authResponse) {
+      alert("Facebook login cancelled");
+      return;
+    }
 
-  const accessToken = response.authResponse.accessToken;
+    const accessToken = response.authResponse.accessToken;
+    loginWithFacebookToken(accessToken);
+  };
 
-  // call async function safely
-  loginWithFacebookToken(accessToken);
-};
+  const loginWithFacebookToken = async (accessToken) => {
+    try {
+      const res = await axios.post(
+        "https://whatsapp-integration-u7tq.onrender.com/accounts/facebook/",
+        { access_token: accessToken }
+      );
 
-const loginWithFacebookToken = async (accessToken) => {
-  try {
-    const res = await axios.post(
-      "https://whatsapp-integration-u7tq.onrender.com/accounts/facebook/",
-      {
-        access_token: accessToken,
-      }
-    );
+      localStorage.setItem("access", res.data.access);
+      localStorage.setItem("refresh", res.data.refresh);
+      navigate("/dashboard");
+    } catch (err) {
+      console.error(err);
+      alert("Facebook login failed");
+    }
+  };
 
-    localStorage.setItem("access", res.data.access);
-    localStorage.setItem("refresh", res.data.refresh);
-    navigate("/dashboard");
-  } catch (err) {
-    console.error(err);
-    alert("Facebook login failed");
-  }
-};
+  const handleFacebookLogin = () => {
+    console.log("Facebook login clicked");
 
-const handleFacebookLogin = () => {
-  if (!window.FB) {
-    alert("Facebook SDK not loaded");
-    return;
-  }
+    if (!window.FB) {
+      alert("Facebook SDK still loading, please try again");
+      return;
+    }
 
-  window.FB.login(
-    handleFacebookResponse, // ✅ NOT async
-    { scope: "email,public_profile" }
-  );
-};
-
-
-  /* Load Facebook SDK */
-  useEffect(() => {
-  if (window.FB) return;
-
-  window.fbAsyncInit = function () {
-    window.FB.init({
-      appId: "855828883746213",
-      cookie: true,
-      xfbml: false,
-      version: "v19.0",
+    window.FB.login(handleFacebookResponse, {
+      scope: "email,public_profile", // ✅ SAFE
     });
   };
 
-  const script = document.createElement("script");
-  script.src = "https://connect.facebook.net/en_US/sdk.js";
-  script.async = true;
-  script.defer = true;
-  document.body.appendChild(script);
-}, []);
+  /* ------------------------------------
+     🟣 Instagram Login (via Facebook)
+     ⚠️ Enable ONLY after Meta approves instagram_basic
+  ------------------------------------ */
+  const handleInstagramLogin = () => {
+    alert("Instagram login will be enabled soon 🚧");
+  };
+
+  /* Load Facebook SDK safely */
+  useEffect(() => {
+    if (window.FB) return;
+
+    window.fbAsyncInit = function () {
+      window.FB.init({
+        appId: "855828883746213",
+        cookie: true,
+        xfbml: false,
+        version: "v19.0",
+      });
+      console.log("Facebook SDK initialized");
+    };
+
+    const script = document.createElement("script");
+    script.src = "https://connect.facebook.net/en_US/sdk.js";
+    script.async = true;
+    script.defer = true;
+    script.onload = () => {
+      console.log("Facebook SDK loaded");
+    };
+    document.body.appendChild(script);
+  }, []);
 
   return (
     <div
@@ -143,6 +151,17 @@ const handleFacebookLogin = () => {
             onClick={handleFacebookLogin}
           >
             <FaFacebook /> Facebook
+          </button>
+
+          {/* Instagram (visible but disabled until approval) */}
+          <button
+            type="button"
+            className="instagram-btn social-item"
+            disabled
+            title="Instagram login coming soon"
+            onClick={handleInstagramLogin}
+          >
+            <FaInstagram /> Instagram
           </button>
         </div>
 
