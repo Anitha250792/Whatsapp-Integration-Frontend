@@ -93,10 +93,8 @@ const Login = () => {
      🟣 Instagram Login (via Facebook)
    
   ------------------------------------ */
- const handleInstagramLogin = () => {
-  window.FB.login(handleFacebookResponse, {
-    scope: "email,public_profile,instagram_basic",
-  });
+const handleInstagramLogin = () => {
+  alert("Instagram login coming soon 🚧");
 };
 
 
