@@ -152,19 +152,19 @@ const handleInstagramLogin = () => {
         <h3 className="login-title">Login</h3>
 
         {/* 🔘 SOCIAL LOGIN */}
-        <div className="social-grid">
-          {/* Google */}
-          <div className="social-item">
-            <GoogleLogin
-              onSuccess={handleGoogleSuccess}
-              onError={() => alert("Google Login Failed")}
-              useOneTap={false}
-              size="large"
-              width="100%"
-            />
-          </div>
+       <div className="social-grid">
+  {/* Google */}
+  <div className="social-item">
+    <GoogleLogin
+      onSuccess={handleGoogleSuccess}
+      onError={() => alert("Google Login Failed")}
+      useOneTap={false}
+      size="large"
+      width="100%"
+    />
+  </div>
 
-           {/* Facebook */}
+  {/* Facebook */}
   <button
     type="button"
     className="facebook-btn social-item"
@@ -173,15 +173,18 @@ const handleInstagramLogin = () => {
     <FaFacebook /> Facebook
   </button>
 
-  {/* Instagram */}
+  {/* Instagram (dev only) */}
   {process.env.NODE_ENV === "development" && (
-  <button className="instagram-btn" onClick={handleInstagramLogin}>
-    <FaInstagram /> Instagram
-  </button>
-)}
+    <button
+      type="button"
+      className="instagram-btn social-item"
+      onClick={handleInstagramLogin}
+    >
+      <FaInstagram /> Instagram
+    </button>
+  )}
+</div>
 
-        </div>
-         
 
         <div className="divider">or</div>
 
