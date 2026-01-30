@@ -5,6 +5,7 @@ import { GoogleLogin } from "@react-oauth/google";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import bgImage from "../assets/bg-file-convert.jpg";
 import "./Login.css";
+import { API_BASE_URL } from "../config";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -13,28 +14,30 @@ const Register = () => {
   const [password1, setPassword1] = useState("");
   const [password2, setPassword2] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  /* 🔐 Google Register / Login */
+  /* ================================
+     🔐 GOOGLE SIGN-UP / LOGIN
+  ================================= */
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
       const res = await axios.post(
-        "https://whatsapp-integration-u7tq.onrender.com/accounts/google/",
-        {
-          token: credentialResponse.credential,
-        }
+        `${API_BASE_URL}/accounts/google/`,
+        { token: credentialResponse.credential }
       );
 
       localStorage.setItem("access", res.data.access);
       localStorage.setItem("refresh", res.data.refresh);
-
       navigate("/dashboard");
     } catch (err) {
-      console.error("Google login failed", err);
-      alert("Google login failed");
+      console.error(err);
+      alert("Google sign-up failed");
     }
   };
 
-  /* 📝 Email Register */
+  /* ================================
+     📝 EMAIL REGISTER
+  ================================= */
   const handleRegister = async (e) => {
     e.preventDefault();
 
@@ -43,31 +46,37 @@ const Register = () => {
       return;
     }
 
-    try {
-      await axios.post(
-        "https://whatsapp-integration-u7tq.onrender.com/auth/registration/",
-        {
-          email,
-          password1,
-          password2,
-        }
-      );
+    setLoading(true);
 
-      alert("Registration successful");
+    try {
+      await axios.post(`${API_BASE_URL}/auth/registration/`, {
+        email,
+        password1,
+        password2,
+      });
+
+      alert("Registration successful. Please login.");
       navigate("/login");
     } catch (err) {
       const data = err.response?.data;
 
       if (data?.email) {
-        alert("Account already exists with this email");
+        alert("An account already exists with this email");
       } else if (data?.password1) {
         alert(data.password1[0]);
+      } else if (data?.non_field_errors) {
+        alert(data.non_field_errors[0]);
       } else {
         alert("Registration failed");
       }
+    } finally {
+      setLoading(false);
     }
   };
 
+  /* ================================
+     🎨 UI
+  ================================= */
   return (
     <div
       className="login-page"
@@ -76,18 +85,23 @@ const Register = () => {
       }}
     >
       <div className="login-card">
-        <h3>Create Account</h3>
+        <h3 className="login-title">Create Account</h3>
 
-        {/* ✅ GOOGLE LOGIN */}
-        <GoogleLogin
-          onSuccess={handleGoogleSuccess}
-          onError={() => alert("Google Login Failed")}
-          useOneTap={false}
-        />
+        {/* 🔘 GOOGLE SIGN-UP */}
+        <div className="social-grid">
+          <div className="social-item">
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={() => alert("Google Sign-up Failed")}
+              useOneTap={false}
+              width="100%"
+            />
+          </div>
+        </div>
 
         <div className="divider">or</div>
 
-        {/* EMAIL REGISTER */}
+        {/* 📝 EMAIL REGISTER */}
         <form onSubmit={handleRegister}>
           <input
             type="email"
@@ -118,10 +132,12 @@ const Register = () => {
             onChange={(e) => setPassword2(e.target.value)}
           />
 
-          <button className="login-btn">Register</button>
+          <button className="login-btn" disabled={loading}>
+            {loading ? "Creating..." : "Register"}
+          </button>
         </form>
 
-        <p onClick={() => navigate("/login")}>
+        <p className="register-text" onClick={() => navigate("/login")}>
           Already have an account? Login
         </p>
       </div>

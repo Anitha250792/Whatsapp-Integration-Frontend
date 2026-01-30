@@ -13,8 +13,11 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [fbReady, setFbReady] = useState(false);
 
-  /* 🔐 Email login */
+  /* ================================
+     🔐 EMAIL LOGIN
+  ================================= */
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
@@ -31,11 +34,13 @@ const Login = () => {
     }
   };
 
-  /* 🔐 Google login */
+  /* ================================
+     🔐 GOOGLE LOGIN
+  ================================= */
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
       const res = await axios.post(
-        "https://whatsapp-integration-u7tq.onrender.com/accounts/google/",
+        `${API_BASE_URL}/accounts/google/`,
         { token: credentialResponse.credential }
       );
 
@@ -47,23 +52,35 @@ const Login = () => {
     }
   };
 
-  /* ------------------------------------
-     🔵 Facebook Login (JWT – NO redirect)
-  ------------------------------------ */
-  const handleFacebookResponse = (response) => {
-    if (!response.authResponse) {
-      alert("Facebook login cancelled");
+  /* ================================
+     🔵 FACEBOOK LOGIN (SDK)
+  ================================= */
+  const handleFacebookLogin = () => {
+    if (!window.FB || !fbReady) {
+      alert("Facebook is still loading. Please try again.");
       return;
     }
 
-    const accessToken = response.authResponse.accessToken;
-    loginWithFacebookToken(accessToken);
+    window.FB.login(
+      (response) => {
+        if (!response.authResponse) {
+          alert("Facebook login cancelled");
+          return;
+        }
+
+        loginWithFacebookToken(response.authResponse.accessToken);
+      },
+      {
+        scope: "email,public_profile",
+        return_scopes: true,
+      }
+    );
   };
 
   const loginWithFacebookToken = async (accessToken) => {
     try {
       const res = await axios.post(
-        "https://whatsapp-integration-u7tq.onrender.com/accounts/facebook/",
+        `${API_BASE_URL}/accounts/facebook/`,
         { access_token: accessToken }
       );
 
@@ -76,32 +93,21 @@ const Login = () => {
     }
   };
 
-  const handleFacebookLogin = () => {
-    console.log("Facebook login clicked");
-
-    if (!window.FB) {
-      alert("Facebook SDK still loading, please try again");
-      return;
-    }
-
-    window.FB.login(handleFacebookResponse, {
-      scope: "email,public_profile", // ✅ SAFE
-    });
+  /* ================================
+     🟣 INSTAGRAM (DISABLED)
+  ================================= */
+  const handleInstagramLogin = () => {
+    alert("Instagram login will be enabled after Meta approval 🚧");
   };
 
-  /* ------------------------------------
-     🟣 Instagram Login (via Facebook)
-   
-  ------------------------------------ */
-const handleInstagramLogin = () => {
-  alert("Instagram login coming soon 🚧");
-};
-
-
-
-  /* Load Facebook SDK safely */
+  /* ================================
+     📦 LOAD FACEBOOK SDK SAFELY
+  ================================= */
   useEffect(() => {
-    if (window.FB) return;
+    if (window.FB) {
+      setFbReady(true);
+      return;
+    }
 
     window.fbAsyncInit = function () {
       window.FB.init({
@@ -110,6 +116,7 @@ const handleInstagramLogin = () => {
         xfbml: false,
         version: "v19.0",
       });
+      setFbReady(true);
       console.log("Facebook SDK initialized");
     };
 
@@ -117,12 +124,12 @@ const handleInstagramLogin = () => {
     script.src = "https://connect.facebook.net/en_US/sdk.js";
     script.async = true;
     script.defer = true;
-    script.onload = () => {
-      console.log("Facebook SDK loaded");
-    };
     document.body.appendChild(script);
   }, []);
 
+  /* ================================
+     🎨 UI
+  ================================= */
   return (
     <div
       className="login-page"
@@ -141,7 +148,6 @@ const handleInstagramLogin = () => {
               onSuccess={handleGoogleSuccess}
               onError={() => alert("Google Login Failed")}
               useOneTap={false}
-              size="large"
               width="100%"
             />
           </div>
@@ -151,19 +157,19 @@ const handleInstagramLogin = () => {
             type="button"
             className="facebook-btn social-item"
             onClick={handleFacebookLogin}
+            disabled={!fbReady}
           >
             <FaFacebook /> Facebook
           </button>
 
-          {/* Instagram (visible but disabled until approval) */}
+          {/* Instagram */}
           <button
-  type="button"
-  className="instagram-btn social-item"
-  onClick={handleInstagramLogin}
->
-  <FaInstagram /> Instagram
-</button>
-
+            type="button"
+            className="instagram-btn social-item"
+            onClick={handleInstagramLogin}
+          >
+            <FaInstagram /> Instagram
+          </button>
         </div>
 
         <div className="divider">or</div>
