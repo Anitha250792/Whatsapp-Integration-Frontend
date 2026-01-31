@@ -118,6 +118,7 @@ const Dashboard = () => {
 
   /* 🔁 PDF → Word (POST) */
   const convertPDFToWord = async (id) => {
+  try {
     const res = await axios.post(
       `${API}/files/convert/pdf-to-word/${id}/`,
       {},
@@ -127,7 +128,14 @@ const Dashboard = () => {
       }
     );
     downloadBlob(res.data, "converted.docx");
-  };
+  } catch (err) {
+    alert(
+      err.response?.data?.error ||
+      "PDF conversion failed"
+    );
+  }
+};
+
 
   /* ➕ Merge PDFs */
   const mergePDFs = async () => {
@@ -149,39 +157,36 @@ const Dashboard = () => {
 
   /* ✂ Split PDF */
   const splitPDF = async () => {
-    if (selectedIds.length !== 1) {
-      alert("Select exactly one PDF");
-      return;
+  const res = await axios.post(
+    `${API}/files/split/${selectedIds[0]}/`,
+    {},
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      responseType: "blob",
     }
+  );
 
-    const res = await axios.post(
-      `${API}/files/split/${selectedIds[0]}/`,
-      {},
-      {
-        headers: { Authorization: `Bearer ${token}` },
-        responseType: "blob",
-      }
-    );
-    downloadBlob(res.data, "split_pages.zip");
-  };
+  downloadBlob(res.data, "split_pages.zip");
+};
+
 
   /* ✍ Sign PDF */
   const signPDF = async () => {
-    if (!signer || selectedIds.length !== 1) {
-      alert("Signer name + one PDF required");
-      return;
+  const res = await axios.post(
+    `${API}/files/sign/${selectedIds[0]}/`,
+    { signer },
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      responseType: "blob",
     }
+  );
 
-    const res = await axios.post(
-      `${API}/files/sign/${selectedIds[0]}/`,
-      { signer },
-      {
-        headers: { Authorization: `Bearer ${token}` },
-        responseType: "blob",
-      }
-    );
-    downloadBlob(res.data, "signed.pdf");
-  };
+  downloadBlob(res.data, "signed.pdf");
+};
 
   /* 📲 WhatsApp share (PUBLIC link) */
   const shareWhatsApp = (file) => {
