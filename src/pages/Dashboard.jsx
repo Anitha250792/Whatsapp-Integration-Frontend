@@ -29,64 +29,48 @@ const Dashboard = () => {
   const [signer, setSigner] = useState("");
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
-
   const [username, setUsername] = useState("User");
   const [initials, setInitials] = useState("U");
 
   const token = localStorage.getItem("access");
 
-  /* 👤 Fetch logged-in user */
+  /* 🔐 Protect dashboard */
+  useEffect(() => {
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+    fetchUserProfile();
+    fetchFiles();
+  }, []);
+
+  /* 👤 Fetch user */
   const fetchUserProfile = async () => {
-  try {
-    const res = await axios.get(`${API}/dj-rest-auth/user/`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    const name = res.data.username || res.data.email || "User";
-    setUsername(name);
-    setInitials(getInitials(name));
-  } catch (err) {
-    console.error("User fetch failed", err);
-  }
-};
-
+    try {
+      const res = await axios.get(`${API}/dj-rest-auth/user/`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const name = res.data.username || res.data.email || "User";
+      setUsername(name);
+      setInitials(getInitials(name));
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   /* 📂 Fetch files */
   const fetchFiles = async () => {
-  try {
-    const res = await axios.get(`${API}/files/`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    console.log("FILES API RESPONSE:", res.data);
-
-    if (Array.isArray(res.data)) {
-      setFiles(res.data);
-    } else {
-      console.error("Expected array, got:", res.data);
+    try {
+      const res = await axios.get(`${API}/files/`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setFiles(Array.isArray(res.data) ? res.data : []);
+    } catch {
       setFiles([]);
+    } finally {
+      setLoading(false);
     }
-  } catch (err) {
-    console.error("Fetch files failed:", err);
-    setFiles([]);
-  } finally {
-    setLoading(false);
-  }
-};
-
-  /* 🔐 Protect dashboard */
-  useEffect(() => {
-  if (!token) {
-    navigate("/login");
-    return;
-  }
-
-  fetchUserProfile(); // ✅ fetch username
-  fetchFiles();       // ✅ fetch files
-}, []);
-
+  };
 
   /* ⬆ Upload */
   const handleUpload = async (e) => {
@@ -103,42 +87,27 @@ const Dashboard = () => {
       });
       fetchFiles();
     } catch {
-      alert("❌ Upload failed");
+      alert("Upload failed");
     } finally {
       setUploading(false);
     }
   };
 
-  /* ☑ Select */
-  const toggleSelect = (id) => {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-    );
-  };
-
-  /* ❌ Delete */
-  const deleteFile = async (id) => {
-    if (!window.confirm("Delete this file?")) return;
-
-    await axios.delete(`${API}/files/delete/${id}/`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    fetchFiles();
-  };
-
   /* ⬇ Download helper */
   const downloadBlob = (data, filename) => {
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(new Blob([data]));
-    link.download = filename;
-    link.click();
+    const url = URL.createObjectURL(new Blob([data]));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
-  /* 🔄 Convert */
+  /* 🔁 Word → PDF (POST) */
   const convertWordToPDF = async (id) => {
-    const res = await axios.get(
+    const res = await axios.post(
       `${API}/files/convert/word-to-pdf/${id}/`,
+      {},
       {
         headers: { Authorization: `Bearer ${token}` },
         responseType: "blob",
@@ -147,9 +116,11 @@ const Dashboard = () => {
     downloadBlob(res.data, "converted.pdf");
   };
 
+  /* 🔁 PDF → Word (POST) */
   const convertPDFToWord = async (id) => {
-    const res = await axios.get(
+    const res = await axios.post(
       `${API}/files/convert/pdf-to-word/${id}/`,
+      {},
       {
         headers: { Authorization: `Bearer ${token}` },
         responseType: "blob",
@@ -158,10 +129,12 @@ const Dashboard = () => {
     downloadBlob(res.data, "converted.docx");
   };
 
-  /* 🧩 Merge */
+  /* ➕ Merge PDFs */
   const mergePDFs = async () => {
-    if (selectedIds.length < 2)
-      return alert("Select at least 2 PDFs");
+    if (selectedIds.length < 2) {
+      alert("Select at least 2 PDFs");
+      return;
+    }
 
     const res = await axios.post(
       `${API}/files/merge/`,
@@ -171,14 +144,15 @@ const Dashboard = () => {
         responseType: "blob",
       }
     );
-
     downloadBlob(res.data, "merged.pdf");
   };
 
-  /* ✂ Split */
+  /* ✂ Split PDF */
   const splitPDF = async () => {
-    if (selectedIds.length !== 1)
-      return alert("Select exactly one PDF");
+    if (selectedIds.length !== 1) {
+      alert("Select exactly one PDF");
+      return;
+    }
 
     const res = await axios.post(
       `${API}/files/split/${selectedIds[0]}/`,
@@ -188,14 +162,15 @@ const Dashboard = () => {
         responseType: "blob",
       }
     );
-
-    downloadBlob(res.data, "split.zip");
+    downloadBlob(res.data, "split_pages.zip");
   };
 
-  /* ✍ Sign */
+  /* ✍ Sign PDF */
   const signPDF = async () => {
-    if (!signer || selectedIds.length !== 1)
-      return alert("Signer name required");
+    if (!signer || selectedIds.length !== 1) {
+      alert("Signer name + one PDF required");
+      return;
+    }
 
     const res = await axios.post(
       `${API}/files/sign/${selectedIds[0]}/`,
@@ -205,24 +180,23 @@ const Dashboard = () => {
         responseType: "blob",
       }
     );
-
     downloadBlob(res.data, "signed.pdf");
   };
 
-  /* 📲 Share */
+  /* 📲 WhatsApp share (PUBLIC link) */
   const shareWhatsApp = (file) => {
-  const msg = `📄 ${file.filename}\nDownload:\n${file.public_url}`;
-  window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`);
-};
+    const publicLink = `${API}/files/public/${file.public_token}/`;
+    const msg = `📄 ${file.filename}\nDownload:\n${publicLink}`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
+  };
 
-
-  const shareGmail = (file) => {
-    const link = `${API}/files/download/${file.id}/`;
-    window.open(
-      `https://mail.google.com/mail/?view=cm&fs=1&body=${encodeURIComponent(
-        link
-      )}`
-    );
+  /* ❌ Delete */
+  const deleteFile = async (id) => {
+    if (!window.confirm("Delete this file?")) return;
+    await axios.delete(`${API}/files/delete/${id}/`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    fetchFiles();
   };
 
   /* 🚪 Logout */
@@ -233,33 +207,27 @@ const Dashboard = () => {
 
   return (
     <div className="dashboard">
-      {/* ===== HEADER ===== */}
       <div className="header">
-  <div className="header-left">
-    <div className="avatar">{initials}</div>
-    <div>
-      <h3>📄 File Converter Dashboard</h3>
-      <p className="username">Welcome, {username}</p>
-    </div>
-  </div>
+        <div className="header-left">
+          <div className="avatar">{initials}</div>
+          <div>
+            <h3>📄 File Converter Dashboard</h3>
+            <p className="username">Welcome, {username}</p>
+          </div>
+        </div>
+        <button className="logout-btn" onClick={handleLogout}>
+          Logout
+        </button>
+      </div>
 
-  <button className="logout-btn" onClick={handleLogout}>
-    Logout
-  </button>
-</div>
-
-
-      {/* ===== UPLOAD ===== */}
       <div className="upload-box">
         <input type="file" onChange={handleUpload} />
         {uploading && <span>Uploading...</span>}
       </div>
 
-      {/* ===== BULK ACTIONS ===== */}
       <div className="bulk-actions">
         <button onClick={mergePDFs}>Merge PDFs</button>
         <button onClick={splitPDF}>Split PDF</button>
-
         <input
           placeholder="Signer name"
           value={signer}
@@ -268,28 +236,26 @@ const Dashboard = () => {
         <button onClick={signPDF}>Sign PDF</button>
       </div>
 
-      {/* ===== FILE LIST ===== */}
       {loading ? (
-        <p className="loading">Loading files...</p>
+        <p>Loading...</p>
       ) : (
         <div className="file-list">
-          {files.length === 0 && <p>No files uploaded</p>}
-
-          {Array.isArray(files) && files.map((file) => (
-
+          {files.map((file) => (
             <div className="file-card" key={file.id}>
               <input
                 type="checkbox"
                 checked={selectedIds.includes(file.id)}
-                onChange={() => toggleSelect(file.id)}
+                onChange={() =>
+                  setSelectedIds((p) =>
+                    p.includes(file.id)
+                      ? p.filter((x) => x !== file.id)
+                      : [...p, file.id]
+                  )
+                }
               />
 
               <div className="file-info">
-                {file.filename.endsWith(".pdf") ? (
-                  <FaFilePdf />
-                ) : (
-                  <FaFileWord />
-                )}
+                {file.filename.endsWith(".pdf") ? <FaFilePdf /> : <FaFileWord />}
                 <span>{file.filename}</span>
               </div>
 
@@ -307,7 +273,6 @@ const Dashboard = () => {
                 )}
 
                 <FaWhatsapp onClick={() => shareWhatsApp(file)} />
-                <FaEnvelope onClick={() => shareGmail(file)} />
                 <FaTrash onClick={() => deleteFile(file.id)} />
               </div>
             </div>
