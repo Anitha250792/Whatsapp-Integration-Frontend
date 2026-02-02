@@ -3,7 +3,6 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import {
   FaWhatsapp,
-  FaEnvelope,
   FaTrash,
   FaFilePdf,
   FaFileWord,
@@ -29,6 +28,11 @@ const Dashboard = () => {
   const [signer, setSigner] = useState("");
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  // 🔥 NEW – conversion loader
+  const [converting, setConverting] = useState(false);
+  const [convertingText, setConvertingText] = useState("");
+
   const [username, setUsername] = useState("User");
   const [initials, setInitials] = useState("U");
 
@@ -93,49 +97,53 @@ const Dashboard = () => {
     }
   };
 
-  /* ⬇ Download helper */
-  const downloadBlob = (data, filename) => {
-    const url = URL.createObjectURL(new Blob([data]));
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  /* 🔁 Word → PDF (POST) */
+  /* 🔁 Word → PDF */
   const convertWordToPDF = async (id) => {
-    const res = await axios.post(
-      `${API}/files/convert/word-to-pdf/${id}/`,
-      {},
-      {
-        headers: { Authorization: `Bearer ${token}` },
-        responseType: "blob",
-      }
-    );
-    downloadBlob(res.data, "converted.pdf");
+    try {
+      setConverting(true);
+      setConvertingText("Converting Word → PDF...");
+
+      const res = await axios.post(
+        `${API}/files/convert/word-to-pdf/${id}/`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      window.open(res.data.public_url, "_blank");
+
+      const msg = `📄 Converted PDF ready:\n${res.data.public_url}`;
+      window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
+
+      fetchFiles();
+    } finally {
+      setConverting(false);
+      setConvertingText("");
+    }
   };
 
-  /* 🔁 PDF → Word (POST) */
+  /* 🔁 PDF → Word */
   const convertPDFToWord = async (id) => {
-  try {
-    const res = await axios.post(
-      `${API}/files/convert/pdf-to-word/${id}/`,
-      {},
-      {
-        headers: { Authorization: `Bearer ${token}` },
-        responseType: "blob",
-      }
-    );
-    downloadBlob(res.data, "converted.docx");
-  } catch (err) {
-    alert(
-      err.response?.data?.error ||
-      "PDF conversion failed"
-    );
-  }
-};
+    try {
+      setConverting(true);
+      setConvertingText("Converting PDF → Word...");
 
+      const res = await axios.post(
+        `${API}/files/convert/pdf-to-word/${id}/`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      window.open(res.data.public_url, "_blank");
+
+      const msg = `📄 Converted Word file:\n${res.data.public_url}`;
+      window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
+
+      fetchFiles();
+    } finally {
+      setConverting(false);
+      setConvertingText("");
+    }
+  };
 
   /* ➕ Merge PDFs */
   const mergePDFs = async () => {
@@ -152,43 +160,42 @@ const Dashboard = () => {
         responseType: "blob",
       }
     );
-    downloadBlob(res.data, "merged.pdf");
+
+    const url = URL.createObjectURL(new Blob([res.data]));
+    window.open(url);
   };
 
   /* ✂ Split PDF */
   const splitPDF = async () => {
-  const res = await axios.post(
-    `${API}/files/split/${selectedIds[0]}/`,
-    {},
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      responseType: "blob",
-    }
-  );
+    const res = await axios.post(
+      `${API}/files/split/${selectedIds[0]}/`,
+      {},
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: "blob",
+      }
+    );
 
-  downloadBlob(res.data, "split_pages.zip");
-};
-
+    const url = URL.createObjectURL(new Blob([res.data]));
+    window.open(url);
+  };
 
   /* ✍ Sign PDF */
   const signPDF = async () => {
-  const res = await axios.post(
-    `${API}/files/sign/${selectedIds[0]}/`,
-    { signer },
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      responseType: "blob",
-    }
-  );
+    const res = await axios.post(
+      `${API}/files/sign/${selectedIds[0]}/`,
+      { signer },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: "blob",
+      }
+    );
 
-  downloadBlob(res.data, "signed.pdf");
-};
+    const url = URL.createObjectURL(new Blob([res.data]));
+    window.open(url);
+  };
 
-  /* 📲 WhatsApp share (PUBLIC link) */
+  /* 📲 WhatsApp share */
   const shareWhatsApp = (file) => {
     const publicLink = `${API}/files/public/${file.public_token}/`;
     const msg = `📄 ${file.filename}\nDownload:\n${publicLink}`;
@@ -212,6 +219,14 @@ const Dashboard = () => {
 
   return (
     <div className="dashboard">
+      {/* 🔥 CONVERSION LOADER */}
+      {converting && (
+        <div className="conversion-overlay">
+          <div className="loader"></div>
+          <p>{convertingText}</p>
+        </div>
+      )}
+
       <div className="header">
         <div className="header-left">
           <div className="avatar">{initials}</div>
@@ -231,14 +246,14 @@ const Dashboard = () => {
       </div>
 
       <div className="bulk-actions">
-        <button onClick={mergePDFs}>Merge PDFs</button>
-        <button onClick={splitPDF}>Split PDF</button>
+        <button onClick={mergePDFs} disabled={converting}>Merge PDFs</button>
+        <button onClick={splitPDF} disabled={converting}>Split PDF</button>
         <input
           placeholder="Signer name"
           value={signer}
           onChange={(e) => setSigner(e.target.value)}
         />
-        <button onClick={signPDF}>Sign PDF</button>
+        <button onClick={signPDF} disabled={converting}>Sign PDF</button>
       </div>
 
       {loading ? (
@@ -266,13 +281,19 @@ const Dashboard = () => {
 
               <div className="actions">
                 {file.filename.endsWith(".docx") && (
-                  <button onClick={() => convertWordToPDF(file.id)}>
+                  <button
+                    disabled={converting}
+                    onClick={() => convertWordToPDF(file.id)}
+                  >
                     Word → PDF
                   </button>
                 )}
 
                 {file.filename.endsWith(".pdf") && (
-                  <button onClick={() => convertPDFToWord(file.id)}>
+                  <button
+                    disabled={converting}
+                    onClick={() => convertPDFToWord(file.id)}
+                  >
                     PDF → Word
                   </button>
                 )}
