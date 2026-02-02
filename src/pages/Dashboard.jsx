@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import {
@@ -29,16 +29,56 @@ const Dashboard = () => {
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // 🔥 NEW – conversion loader
+  // 🔥 Conversion overlay
   const [converting, setConverting] = useState(false);
   const [convertingText, setConvertingText] = useState("");
+
+  // 🔔 Toast
+  const [toast, setToast] = useState(null);
+
+  // 📊 Progress
+  const [progress, setProgress] = useState(0);
+  const progressTimer = useRef(null);
 
   const [username, setUsername] = useState("User");
   const [initials, setInitials] = useState("U");
 
   const token = localStorage.getItem("access");
 
-  /* 🔐 Protect dashboard */
+  /* ================= HELPERS ================= */
+
+  const showToast = (message, type = "info") => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  const startProgress = () => {
+    setProgress(5);
+    progressTimer.current = setInterval(() => {
+      setProgress((p) => (p < 90 ? p + 5 : p));
+    }, 300);
+  };
+
+  const stopProgress = () => {
+    clearInterval(progressTimer.current);
+    setProgress(100);
+    setTimeout(() => setProgress(0), 500);
+  };
+
+  const downloadBlob = (data, filename, type) => {
+    const blob = new Blob([data], { type });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+  };
+
+  /* ================= AUTH ================= */
+
   useEffect(() => {
     if (!token) {
       navigate("/login");
@@ -48,24 +88,22 @@ const Dashboard = () => {
     fetchFiles();
   }, []);
 
-  /* 👤 Fetch user */
   const fetchUserProfile = async () => {
-  try {
-    const res = await axios.get(`${API}/dj-rest-auth/user/`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const name = res.data.username || res.data.email || "User";
-    setUsername(name);
-    setInitials(getInitials(name));
-  } catch (err) {
-    console.error("Failed to fetch user profile", err);
-    alert("Session expired. Please login again.");
-    navigate("/login");
-  }
-};
+    try {
+      const res = await axios.get(`${API}/dj-rest-auth/user/`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const name = res.data.username || res.data.email || "User";
+      setUsername(name);
+      setInitials(getInitials(name));
+    } catch {
+      alert("Session expired. Please login again.");
+      navigate("/login");
+    }
+  };
 
+  /* ================= FILES ================= */
 
-  /* 📂 Fetch files */
   const fetchFiles = async () => {
     try {
       const res = await axios.get(`${API}/files/`, {
@@ -73,13 +111,13 @@ const Dashboard = () => {
       });
       setFiles(Array.isArray(res.data) ? res.data : []);
     } catch {
+      showToast("Failed to load files", "error");
       setFiles([]);
     } finally {
       setLoading(false);
     }
   };
 
-  /* ⬆ Upload */
   const handleUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -92,19 +130,22 @@ const Dashboard = () => {
       await axios.post(`${API}/files/upload/`, formData, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      showToast("File uploaded successfully", "success");
       fetchFiles();
     } catch {
-      alert("Upload failed");
+      showToast("Upload failed", "error");
     } finally {
       setUploading(false);
     }
   };
 
-  /* 🔁 Word → PDF */
+  /* ================= CONVERSIONS ================= */
+
   const convertWordToPDF = async (id) => {
     try {
       setConverting(true);
       setConvertingText("Converting Word → PDF...");
+      startProgress();
 
       const res = await axios.post(
         `${API}/files/convert/word-to-pdf/${id}/`,
@@ -112,23 +153,35 @@ const Dashboard = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      window.open(res.data.public_url, "_blank");
+      stopProgress();
+      showToast("Word converted to PDF", "success");
 
-      const msg = `📄 Converted PDF ready:\n${res.data.public_url}`;
-      window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
+      window.open(res.data.public_url, "_blank");
+      window.open(
+        `https://wa.me/?text=${encodeURIComponent(
+          `📄 Converted PDF ready:\n${res.data.public_url}`
+        )}`,
+        "_blank"
+      );
 
       fetchFiles();
+    } catch (err) {
+      stopProgress();
+      showToast(
+        err.response?.data?.error || "Word → PDF failed",
+        "error"
+      );
     } finally {
       setConverting(false);
       setConvertingText("");
     }
   };
 
-  /* 🔁 PDF → Word */
   const convertPDFToWord = async (id) => {
     try {
       setConverting(true);
       setConvertingText("Converting PDF → Word...");
+      startProgress();
 
       const res = await axios.post(
         `${API}/files/convert/pdf-to-word/${id}/`,
@@ -136,93 +189,139 @@ const Dashboard = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      window.open(res.data.public_url, "_blank");
+      stopProgress();
+      showToast("PDF converted to Word", "success");
 
-      const msg = `📄 Converted Word file:\n${res.data.public_url}`;
-      window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
+      window.open(res.data.public_url, "_blank");
+      window.open(
+        `https://wa.me/?text=${encodeURIComponent(
+          `📄 Converted Word file:\n${res.data.public_url}`
+        )}`,
+        "_blank"
+      );
 
       fetchFiles();
+    } catch (err) {
+      stopProgress();
+      showToast(
+        err.response?.data?.error || "PDF → Word failed",
+        "error"
+      );
     } finally {
       setConverting(false);
       setConvertingText("");
     }
   };
 
-  /* ➕ Merge PDFs */
+  /* ================= PDF TOOLS ================= */
+
   const mergePDFs = async () => {
     if (selectedIds.length < 2) {
-      alert("Select at least 2 PDFs");
+      showToast("Select at least 2 PDFs", "info");
       return;
     }
-
-    const res = await axios.post(
-      `${API}/files/merge/`,
-      { file_ids: selectedIds },
-      {
-        headers: { Authorization: `Bearer ${token}` },
-        responseType: "blob",
-      }
-    );
-
-    const url = URL.createObjectURL(new Blob([res.data]));
-    window.open(url);
+    try {
+      const res = await axios.post(
+        `${API}/files/merge/`,
+        { file_ids: selectedIds },
+        { headers: { Authorization: `Bearer ${token}` }, responseType: "blob" }
+      );
+      downloadBlob(res.data, "merged.pdf", "application/pdf");
+      showToast("PDFs merged successfully", "success");
+    } catch {
+      showToast("PDF merge failed", "error");
+    }
   };
 
-  /* ✂ Split PDF */
   const splitPDF = async () => {
-    const res = await axios.post(
-      `${API}/files/split/${selectedIds[0]}/`,
-      {},
-      {
-        headers: { Authorization: `Bearer ${token}` },
-        responseType: "blob",
-      }
-    );
-
-    const url = URL.createObjectURL(new Blob([res.data]));
-    window.open(url);
+    if (!selectedIds.length) {
+      showToast("Select one PDF to split", "info");
+      return;
+    }
+    try {
+      const res = await axios.post(
+        `${API}/files/split/${selectedIds[0]}/`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` }, responseType: "blob" }
+      );
+      downloadBlob(res.data, "split_pages.zip", "application/zip");
+      showToast("PDF split completed", "success");
+    } catch {
+      showToast("PDF split failed", "error");
+    }
   };
 
-  /* ✍ Sign PDF */
   const signPDF = async () => {
-    const res = await axios.post(
-      `${API}/files/sign/${selectedIds[0]}/`,
-      { signer },
-      {
-        headers: { Authorization: `Bearer ${token}` },
-        responseType: "blob",
-      }
-    );
-
-    const url = URL.createObjectURL(new Blob([res.data]));
-    window.open(url);
+    if (!selectedIds.length) {
+      showToast("Select one PDF to sign", "info");
+      return;
+    }
+    try {
+      const res = await axios.post(
+        `${API}/files/sign/${selectedIds[0]}/`,
+        { signer },
+        { headers: { Authorization: `Bearer ${token}` }, responseType: "blob" }
+      );
+      downloadBlob(res.data, "signed.pdf", "application/pdf");
+      showToast("PDF signed successfully", "success");
+    } catch {
+      showToast("PDF signing failed", "error");
+    }
   };
 
-  /* 📲 WhatsApp share */
+  /* ================= OTHER ================= */
+
   const shareWhatsApp = (file) => {
-    const publicLink = `${API}/files/public/${file.public_token}/`;
-    const msg = `📄 ${file.filename}\nDownload:\n${publicLink}`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
+    const link = `${API}/files/public/${file.public_token}/`;
+    window.open(
+      `https://wa.me/?text=${encodeURIComponent(
+        `📄 ${file.filename}\nDownload:\n${link}`
+      )}`,
+      "_blank"
+    );
   };
 
-  /* ❌ Delete */
   const deleteFile = async (id) => {
     if (!window.confirm("Delete this file?")) return;
-    await axios.delete(`${API}/files/delete/${id}/`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    fetchFiles();
+    try {
+      await axios.delete(`${API}/files/delete/${id}/`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      showToast("File deleted", "success");
+      fetchFiles();
+    } catch {
+      showToast("Delete failed", "error");
+    }
   };
 
-  /* 🚪 Logout */
   const handleLogout = () => {
     localStorage.clear();
     navigate("/login");
   };
 
+  /* ================= UI ================= */
+
   return (
     <div className="dashboard">
-      {/* 🔥 CONVERSION LOADER */}
+      {/* 🔔 TOAST + PROGRESS */}
+      {toast && (
+        <div className={`toast ${toast.type}`}>
+          {toast.message}
+          {progress > 0 && (
+            <div className="progress-box">
+              <div className="progress-bar">
+                <div
+                  className="progress-fill"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+              <small>{progress}%</small>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 🔥 CONVERSION OVERLAY */}
       {converting && (
         <div className="conversion-overlay">
           <div className="loader"></div>
@@ -284,19 +383,13 @@ const Dashboard = () => {
 
               <div className="actions">
                 {file.filename.endsWith(".docx") && (
-                  <button
-                    disabled={converting}
-                    onClick={() => convertWordToPDF(file.id)}
-                  >
+                  <button disabled={converting} onClick={() => convertWordToPDF(file.id)}>
                     Word → PDF
                   </button>
                 )}
 
                 {file.filename.endsWith(".pdf") && (
-                  <button
-                    disabled={converting}
-                    onClick={() => convertPDFToWord(file.id)}
-                  >
+                  <button disabled={converting} onClick={() => convertPDFToWord(file.id)}>
                     PDF → Word
                   </button>
                 )}
