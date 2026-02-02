@@ -50,17 +50,20 @@ const Dashboard = () => {
 
   /* 👤 Fetch user */
   const fetchUserProfile = async () => {
-    try {
-      const res = await axios.get(`${API}/dj-rest-auth/user/`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const name = res.data.username || res.data.email || "User";
-      setUsername(name);
-      setInitials(getInitials(name));
-    } catch (err) {
-      console.error(err);
-    }
-  };
+  try {
+    const res = await axios.get(`${API}/dj-rest-auth/user/`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const name = res.data.username || res.data.email || "User";
+    setUsername(name);
+    setInitials(getInitials(name));
+  } catch (err) {
+    console.error("Failed to fetch user profile", err);
+    alert("Session expired. Please login again.");
+    navigate("/login");
+  }
+};
+
 
   /* 📂 Fetch files */
   const fetchFiles = async () => {
