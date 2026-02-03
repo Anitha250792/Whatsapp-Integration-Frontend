@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { FaEye, FaEyeSlash, FaFacebook, FaInstagram } from "react-icons/fa";
+import { FaEye, FaEyeSlash, FaFacebook } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { GoogleLogin } from "@react-oauth/google";
 import bgImage from "../assets/bg-file-convert.jpg";
@@ -15,9 +15,7 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [fbReady, setFbReady] = useState(false);
 
-  /* ================================
-     🔐 EMAIL LOGIN
-  ================================= */
+  /* ================= EMAIL LOGIN ================= */
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
@@ -25,7 +23,6 @@ const Login = () => {
         email,
         password,
       });
-
       localStorage.setItem("access", res.data.access);
       localStorage.setItem("refresh", res.data.refresh);
       navigate("/dashboard");
@@ -34,16 +31,13 @@ const Login = () => {
     }
   };
 
-  /* ================================
-     🔐 GOOGLE LOGIN
-  ================================= */
+  /* ================= GOOGLE LOGIN ================= */
   const handleGoogleSuccess = async (credentialResponse) => {
     try {
       const res = await axios.post(
         `${API_BASE_URL}/accounts/google/`,
         { token: credentialResponse.credential }
       );
-
       localStorage.setItem("access", res.data.access);
       localStorage.setItem("refresh", res.data.refresh);
       navigate("/dashboard");
@@ -52,57 +46,32 @@ const Login = () => {
     }
   };
 
-  /* ================================
-     🔵 FACEBOOK LOGIN (SDK)
-  ================================= */
+  /* ================= FACEBOOK LOGIN ================= */
   const handleFacebookLogin = () => {
     if (!window.FB || !fbReady) {
-      alert("Facebook is still loading. Please try again.");
+      alert("Facebook SDK still loading");
       return;
     }
 
     window.FB.login(
       (response) => {
-        if (!response.authResponse) {
-          alert("Facebook login cancelled");
-          return;
-        }
-
-        loginWithFacebookToken(response.authResponse.accessToken);
+        if (!response.authResponse) return;
+        axios
+          .post(`${API_BASE_URL}/accounts/facebook/`, {
+            access_token: response.authResponse.accessToken,
+          })
+          .then((res) => {
+            localStorage.setItem("access", res.data.access);
+            localStorage.setItem("refresh", res.data.refresh);
+            navigate("/dashboard");
+          })
+          .catch(() => alert("Facebook login failed"));
       },
-      {
-        scope: "email,public_profile",
-        return_scopes: true,
-      }
+      { scope: "email,public_profile" }
     );
   };
 
-  const loginWithFacebookToken = async (accessToken) => {
-    try {
-      const res = await axios.post(
-        `${API_BASE_URL}/accounts/facebook/`,
-        { access_token: accessToken }
-      );
-
-      localStorage.setItem("access", res.data.access);
-      localStorage.setItem("refresh", res.data.refresh);
-      navigate("/dashboard");
-    } catch (err) {
-      console.error(err);
-      alert("Facebook login failed");
-    }
-  };
-
-  /* ================================
-     🟣 INSTAGRAM (DISABLED)
-  ================================= */
-  const handleInstagramLogin = () => {
-    alert("Instagram login will be enabled after Meta approval 🚧");
-  };
-
-  /* ================================
-     📦 LOAD FACEBOOK SDK SAFELY
-  ================================= */
+  /* ================= LOAD FACEBOOK SDK ================= */
   useEffect(() => {
     if (window.FB) {
       setFbReady(true);
@@ -117,19 +86,15 @@ const Login = () => {
         version: "v19.0",
       });
       setFbReady(true);
-      console.log("Facebook SDK initialized");
     };
 
     const script = document.createElement("script");
     script.src = "https://connect.facebook.net/en_US/sdk.js";
     script.async = true;
-    script.defer = true;
     document.body.appendChild(script);
   }, []);
 
-  /* ================================
-     🎨 UI
-  ================================= */
+  /* ================= UI ================= */
   return (
     <div
       className="login-page"
@@ -140,34 +105,24 @@ const Login = () => {
       <div className="login-card">
         <h3 className="login-title">Login</h3>
 
-        {/* 🔘 SOCIAL LOGIN */}
         <div className="social-grid">
-          {/* Google */}
-          <div className="social-item">
-            <GoogleLogin
-              onSuccess={handleGoogleSuccess}
-              onError={() => alert("Google Login Failed")}
-              useOneTap={false}
-              width="100%"
-            />
-          </div>
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={() => alert("Google Login Failed")}
+            width="100%"
+          />
 
-          {/* Facebook */}
           <button
-            type="button"
-            className="facebook-btn social-item"
+            className="facebook-btn"
             onClick={handleFacebookLogin}
             disabled={!fbReady}
           >
             <FaFacebook /> Facebook
           </button>
-
-          
         </div>
 
         <div className="divider">or</div>
 
-        {/* 🔐 EMAIL LOGIN */}
         <form onSubmit={handleLogin}>
           <input
             type="email"
@@ -197,18 +152,18 @@ const Login = () => {
           Create Account
         </p>
       </div>
-      <div className="whatsapp-info">
-  <h4>ℹ️ WhatsApp Delivery Explained</h4>
-  <ul>
-    <li>1 WhatsApp conversation = 24-hour chat window</li>
-    <li>Multiple file conversions count as <b>1 conversation</b></li>
-    <li>Example: Converting 10 files = 1 conversation</li>
-    <li>Free tier supports <b>1,000 conversations/month</b></li>
-  </ul>
-</div>
 
+      {/* ℹ️ WhatsApp Explanation */}
+      <div className="whatsapp-info">
+        <h4>ℹ️ WhatsApp Delivery Explained</h4>
+        <ul>
+          <li>1 WhatsApp conversation = 24-hour window</li>
+          <li>Multiple conversions = <b>1 conversation</b></li>
+          <li>10 files converted → 1 conversation</li>
+          <li>Free tier: <b>1,000 conversations / month</b></li>
+        </ul>
+      </div>
     </div>
-    
   );
 };
 
