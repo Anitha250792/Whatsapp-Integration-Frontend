@@ -204,7 +204,18 @@ const Login = () => {
           Create Account
         </p>
       </div>
+      <div className="whatsapp-info">
+  <h4>ℹ️ WhatsApp Delivery Explained</h4>
+  <ul>
+    <li>1 WhatsApp conversation = 24-hour chat window</li>
+    <li>Multiple file conversions count as <b>1 conversation</b></li>
+    <li>Example: Converting 10 files = 1 conversation</li>
+    <li>Free tier supports <b>1,000 conversations/month</b></li>
+  </ul>
+</div>
+
     </div>
+    
   );
 };
 

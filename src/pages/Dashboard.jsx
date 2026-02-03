@@ -44,6 +44,8 @@ const Dashboard = () => {
   const [initials, setInitials] = useState("U");
 
   const token = localStorage.getItem("access");
+  const [whatsapp, setWhatsapp] = useState("");
+const [whatsappEnabled, setWhatsappEnabled] = useState(true);
 
   /* ================= HELPERS ================= */
 
@@ -280,6 +282,17 @@ const Dashboard = () => {
       "_blank"
     );
   };
+  const saveWhatsapp = async () => {
+  await axios.post(
+    `${API}/accounts/update-whatsapp/`,
+    {
+      whatsapp_number: whatsapp,
+      whatsapp_enabled: whatsappEnabled,
+    },
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  showToast("WhatsApp settings saved", "success");
+};
 
   const deleteFile = async (id) => {
     if (!window.confirm("Delete this file?")) return;
@@ -341,7 +354,29 @@ const Dashboard = () => {
           Logout
         </button>
       </div>
+      <div className="whatsapp-box">
+  <h4>📲 WhatsApp Integration</h4>
 
+  <input
+    type="text"
+    placeholder="WhatsApp number with country code"
+    value={whatsapp}
+    onChange={(e) => setWhatsapp(e.target.value)}
+  />
+
+  <label>
+    <input
+      type="checkbox"
+      checked={whatsappEnabled}
+      onChange={() => setWhatsappEnabled(!whatsappEnabled)}
+    />
+    Enable WhatsApp delivery
+  </label>
+
+  <button onClick={saveWhatsapp}>Save</button>
+</div>
+
+       
       <div className="upload-box">
         <input type="file" onChange={handleUpload} />
         {uploading && <span>Uploading...</span>}

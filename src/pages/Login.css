@@ -135,3 +135,12 @@
 .instagram-btn:hover {
   opacity: 0.9;
 }
+
+
+.whatsapp-info {
+  margin-top: 20px;
+  padding: 12px;
+  background: #f1fdf6;
+  border-left: 4px solid #25d366;
+  font-size: 14px;
+}
