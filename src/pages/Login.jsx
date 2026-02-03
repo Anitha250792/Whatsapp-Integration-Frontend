@@ -196,8 +196,7 @@ const Login = () => {
         <p className="register-text" onClick={() => navigate("/register")}>
           Create Account
         </p>
-      </div>
-      <div className="whatsapp-info">
+          <div className="whatsapp-info">
   <h4>ℹ️ WhatsApp Delivery Explained</h4>
   <ul>
     <li>1 WhatsApp conversation = 24-hour chat window</li>
@@ -206,6 +205,8 @@ const Login = () => {
     <li>Free tier supports <b>1,000 conversations/month</b></li>
   </ul>
 </div>
+      </div>
+    
 
     </div>
     
