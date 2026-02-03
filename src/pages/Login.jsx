@@ -162,14 +162,7 @@ const Login = () => {
             <FaFacebook /> Facebook
           </button>
 
-          {/* Instagram */}
-          <button
-            type="button"
-            className="instagram-btn social-item"
-            onClick={handleInstagramLogin}
-          >
-            <FaInstagram /> Instagram
-          </button>
+          
         </div>
 
         <div className="divider">or</div>
