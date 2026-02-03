@@ -1,18 +1,27 @@
 import { useEffect, useState, useRef } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { FaWhatsapp, FaTrash, FaFilePdf, FaFileWord } from "react-icons/fa";
+import {
+  FaWhatsapp,
+  FaTrash,
+  FaFilePdf,
+  FaFileWord,
+} from "react-icons/fa";
 import "./Dashboard.css";
 
 const API = "https://whatsapp-integration-u7tq.onrender.com";
 
-/* 🔤 Initials */
-const getInitials = (name = "") =>
-  name ? name.split(" ").map(w => w[0]).join("").toUpperCase() : "U";
+/* 🅰️ Generate initials */
+const getInitials = (name = "") => {
+  if (!name) return "U";
+  const parts = name.split(" ");
+  return parts.length === 1
+    ? parts[0][0].toUpperCase()
+    : (parts[0][0] + parts[1][0]).toUpperCase();
+};
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const token = localStorage.getItem("access");
 
   const [files, setFiles] = useState([]);
   const [selectedIds, setSelectedIds] = useState([]);
@@ -20,70 +29,110 @@ const Dashboard = () => {
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  // 🔥 Conversion overlay
+  const [converting, setConverting] = useState(false);
+  const [convertingText, setConvertingText] = useState("");
+
+  // 🔔 Toast
+  const [toast, setToast] = useState(null);
+
+  // 📊 Progress
+  const [progress, setProgress] = useState(0);
+  const progressTimer = useRef(null);
+
   const [username, setUsername] = useState("User");
   const [initials, setInitials] = useState("U");
 
-  /* 🔔 Toast */
-  const [toast, setToast] = useState(null);
-
-  /* 📊 Progress */
-  const [progress, setProgress] = useState(0);
-  const timer = useRef(null);
-
-  /* 📲 WhatsApp */
+  const token = localStorage.getItem("access");
   const [whatsapp, setWhatsapp] = useState("");
-  const [whatsappEnabled, setWhatsappEnabled] = useState(true);
+const [whatsappEnabled, setWhatsappEnabled] = useState(true);
 
-  const showToast = (msg, type = "info") => {
-    setToast({ msg, type });
+  /* ================= HELPERS ================= */
+
+  const showToast = (message, type = "info") => {
+    setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
   };
 
+  const startProgress = () => {
+    setProgress(5);
+    progressTimer.current = setInterval(() => {
+      setProgress((p) => (p < 90 ? p + 5 : p));
+    }, 300);
+  };
+
+  const stopProgress = () => {
+    clearInterval(progressTimer.current);
+    setProgress(100);
+    setTimeout(() => setProgress(0), 500);
+  };
+
+  const downloadBlob = (data, filename, type) => {
+    const blob = new Blob([data], { type });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+  };
+
   /* ================= AUTH ================= */
+
   useEffect(() => {
-    if (!token) return navigate("/login");
-
-    axios
-      .get(`${API}/dj-rest-auth/user/`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      .then((res) => {
-        const name = res.data.username || res.data.email;
-        setUsername(name);
-        setInitials(getInitials(name));
-      })
-      .catch(() => navigate("/login"));
-
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+    fetchUserProfile();
     fetchFiles();
   }, []);
+
+  const fetchUserProfile = async () => {
+    try {
+      const res = await axios.get(`${API}/dj-rest-auth/user/`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const name = res.data.username || res.data.email || "User";
+      setUsername(name);
+      setInitials(getInitials(name));
+    } catch {
+      alert("Session expired. Please login again.");
+      navigate("/login");
+    }
+  };
+
+  /* ================= FILES ================= */
 
   const fetchFiles = async () => {
     try {
       const res = await axios.get(`${API}/files/`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setFiles(res.data || []);
+      setFiles(Array.isArray(res.data) ? res.data : []);
     } catch {
       showToast("Failed to load files", "error");
+      setFiles([]);
     } finally {
       setLoading(false);
     }
   };
 
-  /* ================= UPLOAD ================= */
   const handleUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
     setUploading(true);
-    const fd = new FormData();
-    fd.append("file", file);
+    const formData = new FormData();
+    formData.append("file", file);
 
     try {
-      await axios.post(`${API}/files/upload/`, fd, {
+      await axios.post(`${API}/files/upload/`, formData, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      showToast("File uploaded", "success");
+      showToast("File uploaded successfully", "success");
       fetchFiles();
     } catch {
       showToast("Upload failed", "error");
@@ -92,96 +141,297 @@ const Dashboard = () => {
     }
   };
 
-  /* ================= WHATSAPP SETTINGS ================= */
-  const saveWhatsapp = async () => {
+  /* ================= CONVERSIONS ================= */
+
+  const convertWordToPDF = async (id) => {
     try {
-      await axios.post(
-        `${API}/accounts/update-whatsapp/`,
-        {
-          whatsapp_number: whatsapp,
-          whatsapp_enabled: whatsappEnabled,
-        },
+      setConverting(true);
+      setConvertingText("Converting Word → PDF...");
+      startProgress();
+
+      const res = await axios.post(
+        `${API}/files/convert/word-to-pdf/${id}/`,
+        {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      showToast("WhatsApp settings saved", "success");
-    } catch {
-      showToast("Failed to save WhatsApp settings", "error");
+
+      stopProgress();
+      showToast("Word converted to PDF", "success");
+
+      window.open(res.data.public_url, "_blank");
+      window.open(
+        `https://wa.me/?text=${encodeURIComponent(
+          `📄 Converted PDF ready:\n${res.data.public_url}`
+        )}`,
+        "_blank"
+      );
+
+      fetchFiles();
+    } catch (err) {
+      stopProgress();
+      showToast(
+        err.response?.data?.error || "Word → PDF failed",
+        "error"
+      );
+    } finally {
+      setConverting(false);
+      setConvertingText("");
     }
   };
 
+  const convertPDFToWord = async (id) => {
+    try {
+      setConverting(true);
+      setConvertingText("Converting PDF → Word...");
+      startProgress();
+
+      const res = await axios.post(
+        `${API}/files/convert/pdf-to-word/${id}/`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      stopProgress();
+      showToast("PDF converted to Word", "success");
+
+      window.open(res.data.public_url, "_blank");
+      window.open(
+        `https://wa.me/?text=${encodeURIComponent(
+          `📄 Converted Word file:\n${res.data.public_url}`
+        )}`,
+        "_blank"
+      );
+
+      fetchFiles();
+    } catch (err) {
+      stopProgress();
+      showToast(
+        err.response?.data?.error || "PDF → Word failed",
+        "error"
+      );
+    } finally {
+      setConverting(false);
+      setConvertingText("");
+    }
+  };
+
+  /* ================= PDF TOOLS ================= */
+
+  const mergePDFs = async () => {
+    if (selectedIds.length < 2) {
+      showToast("Select at least 2 PDFs", "info");
+      return;
+    }
+    try {
+      const res = await axios.post(
+        `${API}/files/merge/`,
+        { file_ids: selectedIds },
+        { headers: { Authorization: `Bearer ${token}` }, responseType: "blob" }
+      );
+      downloadBlob(res.data, "merged.pdf", "application/pdf");
+      showToast("PDFs merged successfully", "success");
+    } catch {
+      showToast("PDF merge failed", "error");
+    }
+  };
+
+  const splitPDF = async () => {
+    if (!selectedIds.length) {
+      showToast("Select one PDF to split", "info");
+      return;
+    }
+    try {
+      const res = await axios.post(
+        `${API}/files/split/${selectedIds[0]}/`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` }, responseType: "blob" }
+      );
+      downloadBlob(res.data, "split_pages.zip", "application/zip");
+      showToast("PDF split completed", "success");
+    } catch {
+      showToast("PDF split failed", "error");
+    }
+  };
+
+  const signPDF = async () => {
+    if (!selectedIds.length) {
+      showToast("Select one PDF to sign", "info");
+      return;
+    }
+    try {
+      const res = await axios.post(
+        `${API}/files/sign/${selectedIds[0]}/`,
+        { signer },
+        { headers: { Authorization: `Bearer ${token}` }, responseType: "blob" }
+      );
+      downloadBlob(res.data, "signed.pdf", "application/pdf");
+      showToast("PDF signed successfully", "success");
+    } catch {
+      showToast("PDF signing failed", "error");
+    }
+  };
+
+  /* ================= OTHER ================= */
+
+  const shareWhatsApp = (file) => {
+    const link = `${API}/files/public/${file.public_token}/`;
+    window.open(
+      `https://wa.me/?text=${encodeURIComponent(
+        `📄 ${file.filename}\nDownload:\n${link}`
+      )}`,
+      "_blank"
+    );
+  };
+  const saveWhatsapp = async () => {
+  await axios.post(
+    `${API}/accounts/update-whatsapp/`,
+    {
+      whatsapp_number: whatsapp,
+      whatsapp_enabled: whatsappEnabled,
+    },
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  showToast("WhatsApp settings saved", "success");
+};
+
+  const deleteFile = async (id) => {
+    if (!window.confirm("Delete this file?")) return;
+    try {
+      await axios.delete(`${API}/files/delete/${id}/`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      showToast("File deleted", "success");
+      fetchFiles();
+    } catch {
+      showToast("Delete failed", "error");
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.clear();
+    navigate("/login");
+  };
+
   /* ================= UI ================= */
+
   return (
     <div className="dashboard">
-      {toast && <div className={`toast ${toast.type}`}>{toast.msg}</div>}
+      {/* 🔔 TOAST + PROGRESS */}
+      {toast && (
+        <div className={`toast ${toast.type}`}>
+          {toast.message}
+          {progress > 0 && (
+            <div className="progress-box">
+              <div className="progress-bar">
+                <div
+                  className="progress-fill"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+              <small>{progress}%</small>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 🔥 CONVERSION OVERLAY */}
+      {converting && (
+        <div className="conversion-overlay">
+          <div className="loader"></div>
+          <p>{convertingText}</p>
+        </div>
+      )}
 
       <div className="header">
         <div className="header-left">
           <div className="avatar">{initials}</div>
           <div>
             <h3>📄 File Converter Dashboard</h3>
-            <p>Welcome, {username}</p>
+            <p className="username">Welcome, {username}</p>
           </div>
         </div>
-        <button onClick={() => { localStorage.clear(); navigate("/login"); }}>
+        <button className="logout-btn" onClick={handleLogout}>
           Logout
         </button>
       </div>
-
-      {/* 📲 WhatsApp */}
       <div className="whatsapp-box">
-        <h4>📲 WhatsApp Integration</h4>
+  <h4>📲 WhatsApp Integration</h4>
 
-        <input
-          placeholder="WhatsApp number with country code"
-          value={whatsapp}
-          onChange={(e) => setWhatsapp(e.target.value)}
-        />
+  <input
+    type="text"
+    placeholder="WhatsApp number with country code"
+    value={whatsapp}
+    onChange={(e) => setWhatsapp(e.target.value)}
+  />
 
-        <label>
-          <input
-            type="checkbox"
-            checked={whatsappEnabled}
-            onChange={() => setWhatsappEnabled(!whatsappEnabled)}
-          />
-          Enable WhatsApp delivery
-        </label>
+  <label>
+    <input
+      type="checkbox"
+      checked={whatsappEnabled}
+      onChange={() => setWhatsappEnabled(!whatsappEnabled)}
+    />
+    Enable WhatsApp delivery
+  </label>
 
-        <button onClick={saveWhatsapp}>Save</button>
-      </div>
+  <button onClick={saveWhatsapp}>Save</button>
+</div>
 
-      {/* 📤 Upload */}
+       
       <div className="upload-box">
         <input type="file" onChange={handleUpload} />
-        {uploading && <span>Uploading…</span>}
+        {uploading && <span>Uploading...</span>}
       </div>
 
-      {/* 📂 Files */}
+      <div className="bulk-actions">
+        <button onClick={mergePDFs} disabled={converting}>Merge PDFs</button>
+        <button onClick={splitPDF} disabled={converting}>Split PDF</button>
+        <input
+          placeholder="Signer name"
+          value={signer}
+          onChange={(e) => setSigner(e.target.value)}
+        />
+        <button onClick={signPDF} disabled={converting}>Sign PDF</button>
+      </div>
+
       {loading ? (
-        <p>Loading…</p>
+        <p>Loading...</p>
       ) : (
         <div className="file-list">
-          {files.map((f) => (
-            <div className="file-card" key={f.id}>
-              {f.filename.endsWith(".pdf") ? <FaFilePdf /> : <FaFileWord />}
-              <span>{f.filename}</span>
-              <FaWhatsapp
-                onClick={() =>
-                  window.open(
-                    `https://wa.me/?text=${encodeURIComponent(
-                      `${f.filename}\n${API}/files/public/${f.public_token}/`
-                    )}`
+          {files.map((file) => (
+            <div className="file-card" key={file.id}>
+              <input
+                type="checkbox"
+                checked={selectedIds.includes(file.id)}
+                onChange={() =>
+                  setSelectedIds((p) =>
+                    p.includes(file.id)
+                      ? p.filter((x) => x !== file.id)
+                      : [...p, file.id]
                   )
                 }
               />
-              <FaTrash
-                onClick={() =>
-                  axios
-                    .delete(`${API}/files/delete/${f.id}/`, {
-                      headers: { Authorization: `Bearer ${token}` },
-                    })
-                    .then(fetchFiles)
-                }
-              />
+
+              <div className="file-info">
+                {file.filename.endsWith(".pdf") ? <FaFilePdf /> : <FaFileWord />}
+                <span>{file.filename}</span>
+              </div>
+
+              <div className="actions">
+                {file.filename.endsWith(".docx") && (
+                  <button disabled={converting} onClick={() => convertWordToPDF(file.id)}>
+                    Word → PDF
+                  </button>
+                )}
+
+                {file.filename.endsWith(".pdf") && (
+                  <button disabled={converting} onClick={() => convertPDFToWord(file.id)}>
+                    PDF → Word
+                  </button>
+                )}
+
+                <FaWhatsapp onClick={() => shareWhatsApp(file)} />
+                <FaTrash onClick={() => deleteFile(file.id)} />
+              </div>
             </div>
           ))}
         </div>
