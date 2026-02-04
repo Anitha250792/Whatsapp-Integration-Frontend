@@ -223,6 +223,7 @@ const copyLink = async (file) => {
   };
 
   const saveWhatsapp = async () => {
+  try {
     await axios.post(
       `${API}/accounts/update-whatsapp/`,
       {
@@ -232,7 +233,14 @@ const copyLink = async (file) => {
       { headers: { Authorization: `Bearer ${token}` } }
     );
     showToast("WhatsApp settings saved", "success");
-  };
+  } catch (err) {
+    showToast(
+      err.response?.data?.error || "Invalid WhatsApp number",
+      "error"
+    );
+  }
+};
+
 
   const deleteFile = async (id) => {
     if (!window.confirm("Delete this file?")) return;
@@ -307,6 +315,27 @@ const copyLink = async (file) => {
         />
         <button onClick={signPDF}>Sign PDF</button>
       </div>
+      <div className="actions">
+  <a
+    href={file.public_url}
+    target="_blank"
+    rel="noreferrer"
+  >
+    Download
+  </a>
+
+  <button
+    onClick={() => {
+      navigator.clipboard.writeText(file.public_url);
+      showToast("Link copied", "success");
+    }}
+  >
+    Copy Link
+  </button>
+
+  <FaWhatsapp onClick={() => shareWhatsApp(file)} />
+</div>
+
 
       {loading ? (
         <p>Loading...</p>
