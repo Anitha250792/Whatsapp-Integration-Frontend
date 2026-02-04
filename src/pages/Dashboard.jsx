@@ -418,10 +418,11 @@ const [whatsappEnabled, setWhatsappEnabled] = useState(true);
 
               <div className="actions">
                 {file.filename.endsWith(".docx") && (
-                  <button disabled={converting} onClick={() => convertWordToPDF(file.id)}>
-                    Word → PDF
-                  </button>
-                )}
+  <button disabled title="Processed in background (Celery)">
+    Word → PDF (Queued)
+  </button>
+)}
+
 
                 {file.filename.endsWith(".pdf") && (
                   <button disabled={converting} onClick={() => convertPDFToWord(file.id)}>
