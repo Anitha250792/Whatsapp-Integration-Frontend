@@ -48,13 +48,15 @@ const Dashboard = () => {
   /* ================= AUTH ================= */
 
   useEffect(() => {
-    if (!token) {
-      navigate("/login");
-      return;
-    }
-    fetchUserProfile();
-    fetchFiles();
-  }, []);
+  if (!token) {
+    navigate("/login");
+    return;
+  }
+  fetchUserProfile();
+  fetchWhatsappSettings(); // ✅ ADD THIS
+  fetchFiles();
+}, []);
+
 
   const fetchUserProfile = async () => {
     try {
@@ -68,6 +70,20 @@ const Dashboard = () => {
       navigate("/login");
     }
   };
+  
+  const fetchWhatsappSettings = async () => {
+  try {
+    const res = await axios.get(
+      `${API}/accounts/profile/`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    setWhatsapp(res.data.whatsapp_number || "");
+    setWhatsappEnabled(res.data.whatsapp_enabled);
+  } catch {
+    // silently ignore
+  }
+};
 
   /* ================= FILES ================= */
 
