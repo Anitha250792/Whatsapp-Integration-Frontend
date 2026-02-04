@@ -1,20 +1,20 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import {
-  FaWhatsapp,
-  FaTrash,
-  FaFilePdf,
-  FaFileWord,
-  FaDownload,
-  FaCopy,
-} from "react-icons/fa";
+import { FaWhatsapp, FaTrash, FaFilePdf, FaFileWord, FaDownload, FaCopy } from "react-icons/fa";
+
 import "./Dashboard.css";
 
 const API = "https://whatsapp-integration-u7tq.onrender.com";
 
-const getInitials = (name = "") =>
-  name ? name.split(" ").map(p => p[0]).join("").slice(0, 2).toUpperCase() : "U";
+/* 🅰️ Generate initials */
+const getInitials = (name = "") => {
+  if (!name) return "U";
+  const parts = name.split(" ");
+  return parts.length === 1
+    ? parts[0][0].toUpperCase()
+    : (parts[0][0] + parts[1][0]).toUpperCase();
+};
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -25,52 +25,46 @@ const Dashboard = () => {
   const [signer, setSigner] = useState("");
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [toast, setToast] = useState(null);
 
+  const [toast, setToast] = useState(null);
   const [username, setUsername] = useState("User");
   const [initials, setInitials] = useState("U");
 
-  /* ---------- helpers ---------- */
+  const [whatsapp, setWhatsapp] = useState("");
+  const [whatsappEnabled, setWhatsappEnabled] = useState(true);
+
+  /* ================= HELPERS ================= */
 
   const showToast = (message, type = "info") => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
   };
-
+  
   const downloadFile = (file) => {
-    window.open(file.public_url, "_blank");
-  };
+  window.open(file.public_url, "_blank");
+};
 
-  const copyLink = async (file) => {
-    try {
-      await navigator.clipboard.writeText(file.public_url);
-      showToast("Link copied", "success");
-    } catch {
-      showToast("Failed to copy link", "error");
-    }
-  };
+const copyLink = async (file) => {
+  try {
+    await navigator.clipboard.writeText(file.public_url);
+    showToast("Download link copied", "success");
+  } catch {
+    showToast("Failed to copy link", "error");
+  }
+};
 
-  const shareWhatsApp = (file) => {
-    window.open(
-      `https://wa.me/?text=${encodeURIComponent(
-        `📄 ${file.filename}\nDownload:\n${file.public_url}`
-      )}`,
-      "_blank"
-    );
-  };
-
-  /* ---------- auth ---------- */
+  /* ================= AUTH ================= */
 
   useEffect(() => {
     if (!token) {
       navigate("/login");
       return;
     }
-    fetchUser();
+    fetchUserProfile();
     fetchFiles();
   }, []);
 
-  const fetchUser = async () => {
+  const fetchUserProfile = async () => {
     try {
       const res = await axios.get(`${API}/dj-rest-auth/user/`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -83,14 +77,14 @@ const Dashboard = () => {
     }
   };
 
-  /* ---------- files ---------- */
+  /* ================= FILES ================= */
 
   const fetchFiles = async () => {
     try {
       const res = await axios.get(`${API}/files/`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setFiles(res.data || []);
+      setFiles(Array.isArray(res.data) ? res.data : []);
     } catch {
       showToast("Failed to load files", "error");
     } finally {
@@ -110,7 +104,7 @@ const Dashboard = () => {
       await axios.post(`${API}/files/upload/`, formData, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      showToast("File uploaded", "success");
+      showToast("File uploaded successfully", "success");
       fetchFiles();
     } catch {
       showToast("Upload failed", "error");
@@ -119,70 +113,200 @@ const Dashboard = () => {
     }
   };
 
-  /* ---------- pdf tools ---------- */
+  /* ================= CONVERSIONS (BACKGROUND) ================= */
+
+  const convertWordToPDF = async () => {
+    if (selectedIds.length !== 1) {
+      showToast("Select exactly one Word file", "info");
+      return;
+    }
+
+    try {
+      await axios.post(
+        `${API}/files/convert/word-to-pdf/${selectedIds[0]}/`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      showToast("Word → PDF queued (background)", "success");
+    } catch {
+      showToast("Conversion unavailable on web server", "error");
+    }
+  };
+
+  const convertPDFToWord = async () => {
+    if (selectedIds.length !== 1) {
+      showToast("Select exactly one PDF file", "info");
+      return;
+    }
+
+    try {
+      await axios.post(
+        `${API}/files/convert/pdf-to-word/${selectedIds[0]}/`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      showToast("PDF → Word queued (background)", "success");
+    } catch {
+      showToast("Conversion unavailable on web server", "error");
+    }
+  };
+
+  /* ================= PDF TOOLS ================= */
 
   const mergePDFs = async () => {
-    if (selectedIds.length < 2)
-      return showToast("Select at least 2 PDFs", "info");
+    if (selectedIds.length < 2) {
+      showToast("Select at least 2 PDFs", "info");
+      return;
+    }
 
-    await axios.post(
-      `${API}/files/merge/`,
-      { file_ids: selectedIds },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-    showToast("Merged successfully", "success");
-    fetchFiles();
+    try {
+      await axios.post(
+        `${API}/files/merge/`,
+        { file_ids: selectedIds },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      showToast("PDFs merged successfully", "success");
+      fetchFiles();
+    } catch {
+      showToast("PDF merge failed", "error");
+    }
   };
 
   const splitPDF = async () => {
-    if (selectedIds.length !== 1)
-      return showToast("Select one PDF", "info");
+    if (selectedIds.length !== 1) {
+      showToast("Select one PDF to split", "info");
+      return;
+    }
 
-    await axios.post(
-      `${API}/files/split/${selectedIds[0]}/`,
-      {},
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-    showToast("Split completed", "success");
-    fetchFiles();
+    try {
+      await axios.post(
+        `${API}/files/split/${selectedIds[0]}/`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      showToast("PDF split completed", "success");
+      fetchFiles();
+    } catch {
+      showToast("PDF split failed", "error");
+    }
   };
 
   const signPDF = async () => {
-    if (selectedIds.length !== 1)
-      return showToast("Select one PDF", "info");
+    if (selectedIds.length !== 1) {
+      showToast("Select one PDF to sign", "info");
+      return;
+    }
 
-    await axios.post(
-      `${API}/files/sign/${selectedIds[0]}/`,
-      { signer },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-    showToast("Signed successfully", "success");
-    fetchFiles();
+    try {
+      await axios.post(
+        `${API}/files/sign/${selectedIds[0]}/`,
+        { signer },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      showToast("PDF signed successfully", "success");
+      fetchFiles();
+    } catch {
+      showToast("PDF signing failed", "error");
+    }
   };
 
-  /* ---------- UI ---------- */
+  /* ================= WHATSAPP ================= */
+
+  const shareWhatsApp = (file) => {
+    const link = `${API}/files/public/${file.public_token}/`;
+    window.open(
+      `https://wa.me/?text=${encodeURIComponent(
+        `📄 ${file.filename}\nDownload:\n${link}`
+      )}`,
+      "_blank"
+    );
+  };
+
+  const saveWhatsapp = async () => {
+  try {
+    await axios.post(
+      `${API}/accounts/update-whatsapp/`,
+      {
+        whatsapp_number: whatsapp,
+        whatsapp_enabled: whatsappEnabled,
+      },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    showToast("WhatsApp settings saved", "success");
+  } catch (err) {
+    showToast(
+      err.response?.data?.error || "Invalid WhatsApp number",
+      "error"
+    );
+  }
+};
+
+  const deleteFile = async (id) => {
+    if (!window.confirm("Delete this file?")) return;
+
+    try {
+      await axios.delete(`${API}/files/delete/${id}/`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      showToast("File deleted", "success");
+      fetchFiles();
+    } catch {
+      showToast("Delete failed", "error");
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.clear();
+    navigate("/login");
+  };
+
+  /* ================= UI ================= */
 
   return (
     <div className="dashboard">
       {toast && <div className={`toast ${toast.type}`}>{toast.message}</div>}
 
       <div className="header">
-        <div className="avatar">{initials}</div>
-        <div>
-          <h3>📄 File Converter Dashboard</h3>
-          <p>Welcome, {username}</p>
+        <div className="header-left">
+          <div className="avatar">{initials}</div>
+          <div>
+            <h3>📄 File Converter Dashboard</h3>
+            <p>Welcome, {username}</p>
+          </div>
         </div>
-        <button onClick={() => navigate("/login")}>Logout</button>
+        <button onClick={handleLogout}>Logout</button>
+      </div>
+
+      <div className="whatsapp-box">
+        <h4>📲 WhatsApp Integration</h4>
+        <input
+          placeholder="WhatsApp number with country code"
+          value={whatsapp}
+          onChange={(e) => setWhatsapp(e.target.value)}
+        />
+        <label>
+          <input
+            type="checkbox"
+            checked={whatsappEnabled}
+            onChange={() => setWhatsappEnabled(!whatsappEnabled)}
+          />
+          Enable WhatsApp delivery
+        </label>
+        <button onClick={saveWhatsapp}>Save</button>
       </div>
 
       <div className="upload-box">
         <input type="file" onChange={handleUpload} />
-        {uploading && <span>Uploading…</span>}
+        {uploading && <span>Uploading...</span>}
       </div>
 
+      {/* 🔧 GLOBAL ACTION BUTTONS */}
       <div className="bulk-actions">
+        <button onClick={convertWordToPDF}>Word → PDF</button>
+        <button onClick={convertPDFToWord}>PDF → Word</button>
         <button onClick={mergePDFs}>Merge PDFs</button>
         <button onClick={splitPDF}>Split PDF</button>
+
         <input
           placeholder="Signer name"
           value={signer}
@@ -192,7 +316,7 @@ const Dashboard = () => {
       </div>
 
       {loading ? (
-        <p>Loading…</p>
+        <p>Loading...</p>
       ) : (
         <div className="file-list">
           {files.map((file) => (
@@ -215,19 +339,35 @@ const Dashboard = () => {
               </div>
 
               <div className="actions">
-                <FaDownload onClick={() => downloadFile(file)} />
-                <FaCopy onClick={() => copyLink(file)} />
-                <FaWhatsapp onClick={() => shareWhatsApp(file)} />
-                <FaTrash
-                  onClick={async () => {
-                    await axios.delete(
-                      `${API}/files/delete/${file.id}/`,
-                      { headers: { Authorization: `Bearer ${token}` } }
-                    );
-                    fetchFiles();
-                  }}
-                />
-              </div>
+  <a
+    href={file.public_url}
+    target="_blank"
+    rel="noreferrer"
+  >
+    Download
+  </a>
+
+  <button
+    onClick={() => {
+      navigator.clipboard.writeText(file.public_url);
+      showToast("Link copied", "success");
+    }}
+  >
+    Copy Link
+  </button>
+
+  <FaWhatsapp
+    title="Share on WhatsApp"
+    onClick={() => shareWhatsApp(file)}
+  />
+
+  <FaTrash
+    title="Delete"
+    onClick={() => deleteFile(file.id)}
+  />
+</div>
+
+
             </div>
           ))}
         </div>
