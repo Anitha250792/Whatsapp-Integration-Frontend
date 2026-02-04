@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import {
@@ -31,7 +31,6 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
 
   const [toast, setToast] = useState(null);
-
   const [username, setUsername] = useState("User");
   const [initials, setInitials] = useState("U");
 
@@ -48,15 +47,13 @@ const Dashboard = () => {
   /* ================= AUTH ================= */
 
   useEffect(() => {
-  if (!token) {
-    navigate("/login");
-    return;
-  }
-  fetchUserProfile();
-  fetchWhatsappSettings(); // ✅ ADD THIS
-  fetchFiles();
-}, []);
-
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+    fetchUserProfile();
+    fetchFiles();
+  }, []);
 
   const fetchUserProfile = async () => {
     try {
@@ -70,20 +67,6 @@ const Dashboard = () => {
       navigate("/login");
     }
   };
-  
-  const fetchWhatsappSettings = async () => {
-  try {
-    const res = await axios.get(
-      `${API}/accounts/profile/`,
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-
-    setWhatsapp(res.data.whatsapp_number || "");
-    setWhatsappEnabled(res.data.whatsapp_enabled);
-  } catch {
-    // silently ignore
-  }
-};
 
   /* ================= FILES ================= */
 
@@ -121,13 +104,42 @@ const Dashboard = () => {
     }
   };
 
-  /* ================= CONVERSIONS (SAFE) ================= */
+  /* ================= CONVERSIONS (BACKGROUND) ================= */
 
-  const asyncNotice = () => {
-    showToast(
-      "This conversion runs in background (Celery worker)",
-      "info"
-    );
+  const convertWordToPDF = async () => {
+    if (selectedIds.length !== 1) {
+      showToast("Select exactly one Word file", "info");
+      return;
+    }
+
+    try {
+      await axios.post(
+        `${API}/files/convert/word-to-pdf/${selectedIds[0]}/`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      showToast("Word → PDF queued (background)", "success");
+    } catch {
+      showToast("Conversion unavailable on web server", "error");
+    }
+  };
+
+  const convertPDFToWord = async () => {
+    if (selectedIds.length !== 1) {
+      showToast("Select exactly one PDF file", "info");
+      return;
+    }
+
+    try {
+      await axios.post(
+        `${API}/files/convert/pdf-to-word/${selectedIds[0]}/`,
+        {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      showToast("PDF → Word queued (background)", "success");
+    } catch {
+      showToast("Conversion unavailable on web server", "error");
+    }
   };
 
   /* ================= PDF TOOLS ================= */
@@ -272,9 +284,13 @@ const Dashboard = () => {
         {uploading && <span>Uploading...</span>}
       </div>
 
+      {/* 🔧 GLOBAL ACTION BUTTONS */}
       <div className="bulk-actions">
+        <button onClick={convertWordToPDF}>Word → PDF</button>
+        <button onClick={convertPDFToWord}>PDF → Word</button>
         <button onClick={mergePDFs}>Merge PDFs</button>
         <button onClick={splitPDF}>Split PDF</button>
+
         <input
           placeholder="Signer name"
           value={signer}
@@ -307,18 +323,6 @@ const Dashboard = () => {
               </div>
 
               <div className="actions">
-                {file.filename.endsWith(".docx") && (
-                  <button onClick={asyncNotice}>
-                    Word → PDF (Queued)
-                  </button>
-                )}
-
-                {file.filename.endsWith(".pdf") && (
-                  <button onClick={asyncNotice}>
-                    PDF → Word (Queued)
-                  </button>
-                )}
-
                 <FaWhatsapp onClick={() => shareWhatsApp(file)} />
                 <FaTrash onClick={() => deleteFile(file.id)} />
               </div>
