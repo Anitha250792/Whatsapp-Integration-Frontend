@@ -1,12 +1,8 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import {
-  FaWhatsapp,
-  FaTrash,
-  FaFilePdf,
-  FaFileWord,
-} from "react-icons/fa";
+import { FaWhatsapp, FaTrash, FaFilePdf, FaFileWord, FaDownload, FaCopy } from "react-icons/fa";
+
 import "./Dashboard.css";
 
 const API = "https://whatsapp-integration-u7tq.onrender.com";
@@ -43,6 +39,19 @@ const Dashboard = () => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
   };
+  
+  const downloadFile = (file) => {
+  window.open(file.public_url, "_blank");
+};
+
+const copyLink = async (file) => {
+  try {
+    await navigator.clipboard.writeText(file.public_url);
+    showToast("Download link copied", "success");
+  } catch {
+    showToast("Failed to copy link", "error");
+  }
+};
 
   /* ================= AUTH ================= */
 
@@ -323,9 +332,27 @@ const Dashboard = () => {
               </div>
 
               <div className="actions">
-                <FaWhatsapp onClick={() => shareWhatsApp(file)} />
-                <FaTrash onClick={() => deleteFile(file.id)} />
-              </div>
+  <FaDownload
+    title="Download"
+    onClick={() => downloadFile(file)}
+  />
+
+  <FaCopy
+    title="Copy link"
+    onClick={() => copyLink(file)}
+  />
+
+  <FaWhatsapp
+    title="Share on WhatsApp"
+    onClick={() => shareWhatsApp(file)}
+  />
+
+  <FaTrash
+    title="Delete"
+    onClick={() => deleteFile(file.id)}
+  />
+</div>
+
             </div>
           ))}
         </div>
