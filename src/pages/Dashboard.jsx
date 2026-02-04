@@ -22,6 +22,7 @@ const getInitials = (name = "") => {
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const token = localStorage.getItem("access");
 
   const [files, setFiles] = useState([]);
   const [selectedIds, setSelectedIds] = useState([]);
@@ -29,54 +30,19 @@ const Dashboard = () => {
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // 🔥 Conversion overlay
-  const [converting, setConverting] = useState(false);
-  const [convertingText, setConvertingText] = useState("");
-
-  // 🔔 Toast
   const [toast, setToast] = useState(null);
-
-  // 📊 Progress
-  const [progress, setProgress] = useState(0);
-  const progressTimer = useRef(null);
 
   const [username, setUsername] = useState("User");
   const [initials, setInitials] = useState("U");
 
-  const token = localStorage.getItem("access");
   const [whatsapp, setWhatsapp] = useState("");
-const [whatsappEnabled, setWhatsappEnabled] = useState(true);
+  const [whatsappEnabled, setWhatsappEnabled] = useState(true);
 
   /* ================= HELPERS ================= */
 
   const showToast = (message, type = "info") => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
-  };
-
-  const startProgress = () => {
-    setProgress(5);
-    progressTimer.current = setInterval(() => {
-      setProgress((p) => (p < 90 ? p + 5 : p));
-    }, 300);
-  };
-
-  const stopProgress = () => {
-    clearInterval(progressTimer.current);
-    setProgress(100);
-    setTimeout(() => setProgress(0), 500);
-  };
-
-  const downloadBlob = (data, filename, type) => {
-    const blob = new Blob([data], { type });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    window.URL.revokeObjectURL(url);
   };
 
   /* ================= AUTH ================= */
@@ -99,7 +65,6 @@ const [whatsappEnabled, setWhatsappEnabled] = useState(true);
       setUsername(name);
       setInitials(getInitials(name));
     } catch {
-      alert("Session expired. Please login again.");
       navigate("/login");
     }
   };
@@ -114,7 +79,6 @@ const [whatsappEnabled, setWhatsappEnabled] = useState(true);
       setFiles(Array.isArray(res.data) ? res.data : []);
     } catch {
       showToast("Failed to load files", "error");
-      setFiles([]);
     } finally {
       setLoading(false);
     }
@@ -141,78 +105,13 @@ const [whatsappEnabled, setWhatsappEnabled] = useState(true);
     }
   };
 
-  /* ================= CONVERSIONS ================= */
+  /* ================= CONVERSIONS (SAFE) ================= */
 
-  const convertWordToPDF = async (id) => {
-    try {
-      setConverting(true);
-      setConvertingText("Converting Word → PDF...");
-      startProgress();
-
-      const res = await axios.post(
-        `${API}/files/convert/word-to-pdf/${id}/`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      stopProgress();
-      showToast("Word converted to PDF", "success");
-
-      window.open(res.data.public_url, "_blank");
-      window.open(
-        `https://wa.me/?text=${encodeURIComponent(
-          `📄 Converted PDF ready:\n${res.data.public_url}`
-        )}`,
-        "_blank"
-      );
-
-      fetchFiles();
-    } catch (err) {
-      stopProgress();
-      showToast(
-        err.response?.data?.error || "Word → PDF failed",
-        "error"
-      );
-    } finally {
-      setConverting(false);
-      setConvertingText("");
-    }
-  };
-
-  const convertPDFToWord = async (id) => {
-    try {
-      setConverting(true);
-      setConvertingText("Converting PDF → Word...");
-      startProgress();
-
-      const res = await axios.post(
-        `${API}/files/convert/pdf-to-word/${id}/`,
-        {},
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      stopProgress();
-      showToast("PDF converted to Word", "success");
-
-      window.open(res.data.public_url, "_blank");
-      window.open(
-        `https://wa.me/?text=${encodeURIComponent(
-          `📄 Converted Word file:\n${res.data.public_url}`
-        )}`,
-        "_blank"
-      );
-
-      fetchFiles();
-    } catch (err) {
-      stopProgress();
-      showToast(
-        err.response?.data?.error || "PDF → Word failed",
-        "error"
-      );
-    } finally {
-      setConverting(false);
-      setConvertingText("");
-    }
+  const asyncNotice = () => {
+    showToast(
+      "This conversion runs in background (Celery worker)",
+      "info"
+    );
   };
 
   /* ================= PDF TOOLS ================= */
@@ -222,56 +121,59 @@ const [whatsappEnabled, setWhatsappEnabled] = useState(true);
       showToast("Select at least 2 PDFs", "info");
       return;
     }
+
     try {
-      const res = await axios.post(
+      await axios.post(
         `${API}/files/merge/`,
         { file_ids: selectedIds },
-        { headers: { Authorization: `Bearer ${token}` }, responseType: "blob" }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-      downloadBlob(res.data, "merged.pdf", "application/pdf");
       showToast("PDFs merged successfully", "success");
+      fetchFiles();
     } catch {
       showToast("PDF merge failed", "error");
     }
   };
 
   const splitPDF = async () => {
-    if (!selectedIds.length) {
+    if (selectedIds.length !== 1) {
       showToast("Select one PDF to split", "info");
       return;
     }
+
     try {
-      const res = await axios.post(
+      await axios.post(
         `${API}/files/split/${selectedIds[0]}/`,
         {},
-        { headers: { Authorization: `Bearer ${token}` }, responseType: "blob" }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-      downloadBlob(res.data, "split_pages.zip", "application/zip");
       showToast("PDF split completed", "success");
+      fetchFiles();
     } catch {
       showToast("PDF split failed", "error");
     }
   };
 
   const signPDF = async () => {
-    if (!selectedIds.length) {
+    if (selectedIds.length !== 1) {
       showToast("Select one PDF to sign", "info");
       return;
     }
+
     try {
-      const res = await axios.post(
+      await axios.post(
         `${API}/files/sign/${selectedIds[0]}/`,
         { signer },
-        { headers: { Authorization: `Bearer ${token}` }, responseType: "blob" }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-      downloadBlob(res.data, "signed.pdf", "application/pdf");
       showToast("PDF signed successfully", "success");
+      fetchFiles();
     } catch {
       showToast("PDF signing failed", "error");
     }
   };
 
-  /* ================= OTHER ================= */
+  /* ================= WHATSAPP ================= */
 
   const shareWhatsApp = (file) => {
     const link = `${API}/files/public/${file.public_token}/`;
@@ -282,20 +184,22 @@ const [whatsappEnabled, setWhatsappEnabled] = useState(true);
       "_blank"
     );
   };
+
   const saveWhatsapp = async () => {
-  await axios.post(
-    `${API}/accounts/update-whatsapp/`,
-    {
-      whatsapp_number: whatsapp,
-      whatsapp_enabled: whatsappEnabled,
-    },
-    { headers: { Authorization: `Bearer ${token}` } }
-  );
-  showToast("WhatsApp settings saved", "success");
-};
+    await axios.post(
+      `${API}/accounts/update-whatsapp/`,
+      {
+        whatsapp_number: whatsapp,
+        whatsapp_enabled: whatsappEnabled,
+      },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    showToast("WhatsApp settings saved", "success");
+  };
 
   const deleteFile = async (id) => {
     if (!window.confirm("Delete this file?")) return;
+
     try {
       await axios.delete(`${API}/files/delete/${id}/`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -316,81 +220,51 @@ const [whatsappEnabled, setWhatsappEnabled] = useState(true);
 
   return (
     <div className="dashboard">
-      {/* 🔔 TOAST + PROGRESS */}
-      {toast && (
-        <div className={`toast ${toast.type}`}>
-          {toast.message}
-          {progress > 0 && (
-            <div className="progress-box">
-              <div className="progress-bar">
-                <div
-                  className="progress-fill"
-                  style={{ width: `${progress}%` }}
-                />
-              </div>
-              <small>{progress}%</small>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* 🔥 CONVERSION OVERLAY */}
-      {converting && (
-        <div className="conversion-overlay">
-          <div className="loader"></div>
-          <p>{convertingText}</p>
-        </div>
-      )}
+      {toast && <div className={`toast ${toast.type}`}>{toast.message}</div>}
 
       <div className="header">
         <div className="header-left">
           <div className="avatar">{initials}</div>
           <div>
             <h3>📄 File Converter Dashboard</h3>
-            <p className="username">Welcome, {username}</p>
+            <p>Welcome, {username}</p>
           </div>
         </div>
-        <button className="logout-btn" onClick={handleLogout}>
-          Logout
-        </button>
+        <button onClick={handleLogout}>Logout</button>
       </div>
+
       <div className="whatsapp-box">
-  <h4>📲 WhatsApp Integration</h4>
+        <h4>📲 WhatsApp Integration</h4>
+        <input
+          placeholder="WhatsApp number with country code"
+          value={whatsapp}
+          onChange={(e) => setWhatsapp(e.target.value)}
+        />
+        <label>
+          <input
+            type="checkbox"
+            checked={whatsappEnabled}
+            onChange={() => setWhatsappEnabled(!whatsappEnabled)}
+          />
+          Enable WhatsApp delivery
+        </label>
+        <button onClick={saveWhatsapp}>Save</button>
+      </div>
 
-  <input
-    type="text"
-    placeholder="WhatsApp number with country code"
-    value={whatsapp}
-    onChange={(e) => setWhatsapp(e.target.value)}
-  />
-
-  <label>
-    <input
-      type="checkbox"
-      checked={whatsappEnabled}
-      onChange={() => setWhatsappEnabled(!whatsappEnabled)}
-    />
-    Enable WhatsApp delivery
-  </label>
-
-  <button onClick={saveWhatsapp}>Save</button>
-</div>
-
-       
       <div className="upload-box">
         <input type="file" onChange={handleUpload} />
         {uploading && <span>Uploading...</span>}
       </div>
 
       <div className="bulk-actions">
-        <button onClick={mergePDFs} disabled={converting}>Merge PDFs</button>
-        <button onClick={splitPDF} disabled={converting}>Split PDF</button>
+        <button onClick={mergePDFs}>Merge PDFs</button>
+        <button onClick={splitPDF}>Split PDF</button>
         <input
           placeholder="Signer name"
           value={signer}
           onChange={(e) => setSigner(e.target.value)}
         />
-        <button onClick={signPDF} disabled={converting}>Sign PDF</button>
+        <button onClick={signPDF}>Sign PDF</button>
       </div>
 
       {loading ? (
@@ -418,15 +292,14 @@ const [whatsappEnabled, setWhatsappEnabled] = useState(true);
 
               <div className="actions">
                 {file.filename.endsWith(".docx") && (
-  <button disabled title="Processed in background (Celery)">
-    Word → PDF (Queued)
-  </button>
-)}
-
+                  <button onClick={asyncNotice}>
+                    Word → PDF (Queued)
+                  </button>
+                )}
 
                 {file.filename.endsWith(".pdf") && (
-                  <button disabled={converting} onClick={() => convertPDFToWord(file.id)}>
-                    PDF → Word
+                  <button onClick={asyncNotice}>
+                    PDF → Word (Queued)
                   </button>
                 )}
 
