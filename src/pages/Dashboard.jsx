@@ -253,21 +253,30 @@ const Dashboard = () => {
             <p>Welcome, {username}</p>
           </div>
         </div>
-        <button onClick={handleLogout}>Logout</button>
+        <button className="logout-btn" onClick={handleLogout}>Logout</button>
+
       </div>
 
       {/* 📲 WhatsApp Settings */}
+{/* 📲 WhatsApp Settings */}
 <div className="whatsapp-box">
-  <h4>📲 WhatsApp Integration</h4>
+  <div className="whatsapp-header">
+    <h4>📲 WhatsApp Integration</h4>
+    <span className="whatsapp-hint">Get files instantly on WhatsApp</span>
+  </div>
 
-  <input
-    type="text"
-    placeholder="WhatsApp number (e.g. +919876543210)"
-    value={whatsapp}
-    onChange={(e) => setWhatsapp(e.target.value)}
-  />
+  <div className="whatsapp-row">
+    <input
+      type="text"
+      placeholder="+91 98765 43210"
+      value={whatsapp}
+      onChange={(e) => setWhatsapp(e.target.value)}
+    />
 
-  <label>
+    <button onClick={saveWhatsapp}>Save</button>
+  </div>
+
+  <label className="whatsapp-toggle">
     <input
       type="checkbox"
       checked={whatsappEnabled}
@@ -275,15 +284,17 @@ const Dashboard = () => {
     />
     Enable WhatsApp delivery
   </label>
-
-  <button onClick={saveWhatsapp}>Save</button>
 </div>
 
-
       <div className="upload-box">
-        <input type="file" onChange={handleUpload} />
-        {uploading && <span>Uploading...</span>}
-      </div>
+  <label className="upload-label">
+    <input type="file" onChange={handleUpload} hidden />
+    <span>📂 Click to choose file or drag & drop</span>
+  </label>
+
+  {uploading && <p className="uploading-text">Uploading…</p>}
+</div>
+
 
       {/* 🔧 ACTION BUTTONS */}
       <div className="bulk-actions">
