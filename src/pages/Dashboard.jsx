@@ -263,25 +263,49 @@ const Dashboard = () => {
 
       {/* 🔧 ACTION BUTTONS */}
       <div className="bulk-actions">
-        {selectedIds.length === 1 && (
-          <>
-            <button onClick={convertWordToPDF}>Word → PDF</button>
-            <button onClick={convertPDFToWord}>PDF → Word</button>
-            <button onClick={splitPDF}>Split PDF</button>
+  <button
+    disabled={selectedIds.length !== 1}
+    onClick={convertWordToPDF}
+  >
+    Word → PDF
+  </button>
 
-            <input
-              placeholder="Signer name"
-              value={signer}
-              onChange={(e) => setSigner(e.target.value)}
-            />
-            <button onClick={signPDF}>Sign PDF</button>
-          </>
-        )}
+  <button
+    disabled={selectedIds.length !== 1}
+    onClick={convertPDFToWord}
+  >
+    PDF → Word
+  </button>
 
-        {selectedIds.length >= 2 && (
-          <button onClick={mergePDFs}>Merge PDFs</button>
-        )}
-      </div>
+  <button
+    disabled={selectedIds.length < 2}
+    onClick={mergePDFs}
+  >
+    Merge PDFs
+  </button>
+
+  <button
+    disabled={selectedIds.length !== 1}
+    onClick={splitPDF}
+  >
+    Split PDF
+  </button>
+
+  <input
+    placeholder="Signer name"
+    value={signer}
+    onChange={(e) => setSigner(e.target.value)}
+    disabled={selectedIds.length !== 1}
+  />
+
+  <button
+    disabled={selectedIds.length !== 1}
+    onClick={signPDF}
+  >
+    Sign PDF
+  </button>
+</div>
+
 
       {loading ? (
         <p>Loading...</p>

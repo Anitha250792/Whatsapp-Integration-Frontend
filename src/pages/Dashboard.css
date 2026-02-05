@@ -419,3 +419,15 @@
   color: #5b21b6;
   margin-left: 6px;
 }
+
+.bulk-actions button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.bulk-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 20px 0;
+}
