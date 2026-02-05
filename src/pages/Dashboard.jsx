@@ -1,7 +1,12 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { FaWhatsapp, FaTrash, FaFilePdf, FaFileWord, FaDownload, FaCopy } from "react-icons/fa";
+import {
+  FaWhatsapp,
+  FaTrash,
+  FaFilePdf,
+  FaFileWord,
+} from "react-icons/fa";
 
 import "./Dashboard.css";
 
@@ -39,30 +44,26 @@ const Dashboard = () => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
   };
-  
-  const downloadFile = (file) => {
-  window.open(file.public_url, "_blank");
-};
 
-const copyLink = async (file) => {
-  try {
-    await navigator.clipboard.writeText(file.public_url);
-    showToast("Download link copied", "success");
-  } catch {
-    showToast("Failed to copy link", "error");
-  }
-};
-
-  /* ================= AUTH ================= */
+  /* ================= AUTH + POLLING ================= */
 
   useEffect(() => {
     if (!token) {
       navigate("/login");
       return;
     }
+
     fetchUserProfile();
-    fetchFiles();
+    fetchFiles(); // initial load
+
+    const interval = setInterval(fetchFiles, 5000); // polling
+    return () => clearInterval(interval);
   }, []);
+
+  /* Clear selection when file list changes */
+  useEffect(() => {
+    setSelectedIds([]);
+  }, [files]);
 
   const fetchUserProfile = async () => {
     try {
@@ -85,8 +86,8 @@ const copyLink = async (file) => {
         headers: { Authorization: `Bearer ${token}` },
       });
       setFiles(Array.isArray(res.data) ? res.data : []);
-    } catch {
-      showToast("Failed to load files", "error");
+    } catch (err) {
+      console.error("Polling failed", err);
     } finally {
       setLoading(false);
     }
@@ -105,7 +106,6 @@ const copyLink = async (file) => {
         headers: { Authorization: `Bearer ${token}` },
       });
       showToast("File uploaded successfully", "success");
-      fetchFiles();
     } catch {
       showToast("Upload failed", "error");
     } finally {
@@ -113,13 +113,10 @@ const copyLink = async (file) => {
     }
   };
 
-  /* ================= CONVERSIONS (BACKGROUND) ================= */
+  /* ================= CONVERSIONS ================= */
 
   const convertWordToPDF = async () => {
-    if (selectedIds.length !== 1) {
-      showToast("Select exactly one Word file", "info");
-      return;
-    }
+    if (selectedIds.length !== 1) return;
 
     try {
       await axios.post(
@@ -127,17 +124,14 @@ const copyLink = async (file) => {
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      showToast("Word → PDF queued (background)", "success");
+      showToast("Word → PDF started (background)", "success");
     } catch {
-      showToast("Conversion unavailable on web server", "error");
+      showToast("Conversion unavailable", "error");
     }
   };
 
   const convertPDFToWord = async () => {
-    if (selectedIds.length !== 1) {
-      showToast("Select exactly one PDF file", "info");
-      return;
-    }
+    if (selectedIds.length !== 1) return;
 
     try {
       await axios.post(
@@ -145,19 +139,16 @@ const copyLink = async (file) => {
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      showToast("PDF → Word queued (background)", "success");
+      showToast("PDF → Word started (background)", "success");
     } catch {
-      showToast("Conversion unavailable on web server", "error");
+      showToast("Conversion unavailable", "error");
     }
   };
 
   /* ================= PDF TOOLS ================= */
 
   const mergePDFs = async () => {
-    if (selectedIds.length < 2) {
-      showToast("Select at least 2 PDFs", "info");
-      return;
-    }
+    if (selectedIds.length < 2) return;
 
     try {
       await axios.post(
@@ -166,17 +157,13 @@ const copyLink = async (file) => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       showToast("PDFs merged successfully", "success");
-      fetchFiles();
     } catch {
-      showToast("PDF merge failed", "error");
+      showToast("Merge failed", "error");
     }
   };
 
   const splitPDF = async () => {
-    if (selectedIds.length !== 1) {
-      showToast("Select one PDF to split", "info");
-      return;
-    }
+    if (selectedIds.length !== 1) return;
 
     try {
       await axios.post(
@@ -185,17 +172,13 @@ const copyLink = async (file) => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       showToast("PDF split completed", "success");
-      fetchFiles();
     } catch {
-      showToast("PDF split failed", "error");
+      showToast("Split failed", "error");
     }
   };
 
   const signPDF = async () => {
-    if (selectedIds.length !== 1) {
-      showToast("Select one PDF to sign", "info");
-      return;
-    }
+    if (selectedIds.length !== 1) return;
 
     try {
       await axios.post(
@@ -204,42 +187,37 @@ const copyLink = async (file) => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       showToast("PDF signed successfully", "success");
-      fetchFiles();
     } catch {
-      showToast("PDF signing failed", "error");
+      showToast("Signing failed", "error");
     }
   };
 
   /* ================= WHATSAPP ================= */
 
   const shareWhatsApp = (file) => {
-    const link = `${API}/files/public/${file.public_token}/`;
     window.open(
       `https://wa.me/?text=${encodeURIComponent(
-        `📄 ${file.filename}\nDownload:\n${link}`
+        `📄 ${file.filename}\nDownload:\n${file.public_url}`
       )}`,
       "_blank"
     );
   };
 
   const saveWhatsapp = async () => {
-  try {
-    await axios.post(
-      `${API}/accounts/update-whatsapp/`,
-      {
-        whatsapp_number: whatsapp,
-        whatsapp_enabled: whatsappEnabled,
-      },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
-    showToast("WhatsApp settings saved", "success");
-  } catch (err) {
-    showToast(
-      err.response?.data?.error || "Invalid WhatsApp number",
-      "error"
-    );
-  }
-};
+    try {
+      await axios.post(
+        `${API}/accounts/update-whatsapp/`,
+        {
+          whatsapp_number: whatsapp,
+          whatsapp_enabled: whatsappEnabled,
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      showToast("WhatsApp settings saved", "success");
+    } catch (err) {
+      showToast(err.response?.data?.error || "Invalid number", "error");
+    }
+  };
 
   const deleteFile = async (id) => {
     if (!window.confirm("Delete this file?")) return;
@@ -249,7 +227,6 @@ const copyLink = async (file) => {
         headers: { Authorization: `Bearer ${token}` },
       });
       showToast("File deleted", "success");
-      fetchFiles();
     } catch {
       showToast("Delete failed", "error");
     }
@@ -300,19 +277,28 @@ const copyLink = async (file) => {
         {uploading && <span>Uploading...</span>}
       </div>
 
-      {/* 🔧 GLOBAL ACTION BUTTONS */}
       <div className="bulk-actions">
-        <button onClick={convertWordToPDF}>Word → PDF</button>
-        <button onClick={convertPDFToWord}>PDF → Word</button>
-        <button onClick={mergePDFs}>Merge PDFs</button>
-        <button onClick={splitPDF}>Split PDF</button>
+        <button disabled={selectedIds.length !== 1} onClick={convertWordToPDF}>
+          Word → PDF
+        </button>
+        <button disabled={selectedIds.length !== 1} onClick={convertPDFToWord}>
+          PDF → Word
+        </button>
+        <button disabled={selectedIds.length < 2} onClick={mergePDFs}>
+          Merge PDFs
+        </button>
+        <button disabled={selectedIds.length !== 1} onClick={splitPDF}>
+          Split PDF
+        </button>
 
         <input
           placeholder="Signer name"
           value={signer}
           onChange={(e) => setSigner(e.target.value)}
         />
-        <button onClick={signPDF}>Sign PDF</button>
+        <button disabled={selectedIds.length !== 1} onClick={signPDF}>
+          Sign PDF
+        </button>
       </div>
 
       {loading ? (
@@ -325,10 +311,10 @@ const copyLink = async (file) => {
                 type="checkbox"
                 checked={selectedIds.includes(file.id)}
                 onChange={() =>
-                  setSelectedIds((p) =>
-                    p.includes(file.id)
-                      ? p.filter((x) => x !== file.id)
-                      : [...p, file.id]
+                  setSelectedIds((prev) =>
+                    prev.includes(file.id)
+                      ? prev.filter((x) => x !== file.id)
+                      : [...prev, file.id]
                   )
                 }
               />
@@ -339,35 +325,13 @@ const copyLink = async (file) => {
               </div>
 
               <div className="actions">
-  <a
-    href={file.public_url}
-    target="_blank"
-    rel="noreferrer"
-  >
-    Download
-  </a>
+                <a href={file.public_url} target="_blank" rel="noreferrer">
+                  Download
+                </a>
 
-  <button
-    onClick={() => {
-      navigator.clipboard.writeText(file.public_url);
-      showToast("Link copied", "success");
-    }}
-  >
-    Copy Link
-  </button>
-
-  <FaWhatsapp
-    title="Share on WhatsApp"
-    onClick={() => shareWhatsApp(file)}
-  />
-
-  <FaTrash
-    title="Delete"
-    onClick={() => deleteFile(file.id)}
-  />
-</div>
-
-
+                <FaWhatsapp onClick={() => shareWhatsApp(file)} />
+                <FaTrash onClick={() => deleteFile(file.id)} />
+              </div>
             </div>
           ))}
         </div>
