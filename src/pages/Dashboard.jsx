@@ -256,6 +256,30 @@ const Dashboard = () => {
         <button onClick={handleLogout}>Logout</button>
       </div>
 
+      {/* 📲 WhatsApp Settings */}
+<div className="whatsapp-box">
+  <h4>📲 WhatsApp Integration</h4>
+
+  <input
+    type="text"
+    placeholder="WhatsApp number (e.g. +919876543210)"
+    value={whatsapp}
+    onChange={(e) => setWhatsapp(e.target.value)}
+  />
+
+  <label>
+    <input
+      type="checkbox"
+      checked={whatsappEnabled}
+      onChange={() => setWhatsappEnabled(!whatsappEnabled)}
+    />
+    Enable WhatsApp delivery
+  </label>
+
+  <button onClick={saveWhatsapp}>Save</button>
+</div>
+
+
       <div className="upload-box">
         <input type="file" onChange={handleUpload} />
         {uploading && <span>Uploading...</span>}
