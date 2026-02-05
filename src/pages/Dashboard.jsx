@@ -21,6 +21,14 @@ const getInitials = (name = "") => {
     : (parts[0][0] + parts[1][0]).toUpperCase();
 };
 
+/* 🏷 Operation label from filename */
+const getOperationLabel = (filename) => {
+  if (filename.includes("_signed")) return "Signed";
+  if (filename.startsWith("merged_")) return "Merged";
+  if (filename.includes("_split")) return "Split";
+  return null;
+};
+
 const Dashboard = () => {
   const navigate = useNavigate();
   const token = localStorage.getItem("access");
@@ -54,9 +62,9 @@ const Dashboard = () => {
     }
 
     fetchUserProfile();
-    fetchFiles(); // initial load
+    fetchFiles();
 
-    const interval = setInterval(fetchFiles, 5000); // polling
+    const interval = setInterval(fetchFiles, 5000);
     return () => clearInterval(interval);
   }, []);
 
@@ -117,7 +125,6 @@ const Dashboard = () => {
 
   const convertWordToPDF = async () => {
     if (selectedIds.length !== 1) return;
-
     try {
       await axios.post(
         `${API}/files/convert/word-to-pdf/${selectedIds[0]}/`,
@@ -132,7 +139,6 @@ const Dashboard = () => {
 
   const convertPDFToWord = async () => {
     if (selectedIds.length !== 1) return;
-
     try {
       await axios.post(
         `${API}/files/convert/pdf-to-word/${selectedIds[0]}/`,
@@ -149,7 +155,6 @@ const Dashboard = () => {
 
   const mergePDFs = async () => {
     if (selectedIds.length < 2) return;
-
     try {
       await axios.post(
         `${API}/files/merge/`,
@@ -164,14 +169,13 @@ const Dashboard = () => {
 
   const splitPDF = async () => {
     if (selectedIds.length !== 1) return;
-
     try {
       await axios.post(
         `${API}/files/split/${selectedIds[0]}/`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      showToast("PDF split completed", "success");
+      showToast("PDF split completed (ZIP)", "success");
     } catch {
       showToast("Split failed", "error");
     }
@@ -179,7 +183,6 @@ const Dashboard = () => {
 
   const signPDF = async () => {
     if (selectedIds.length !== 1) return;
-
     try {
       await axios.post(
         `${API}/files/sign/${selectedIds[0]}/`,
@@ -221,7 +224,6 @@ const Dashboard = () => {
 
   const deleteFile = async (id) => {
     if (!window.confirm("Delete this file?")) return;
-
     try {
       await axios.delete(`${API}/files/delete/${id}/`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -254,51 +256,31 @@ const Dashboard = () => {
         <button onClick={handleLogout}>Logout</button>
       </div>
 
-      <div className="whatsapp-box">
-        <h4>📲 WhatsApp Integration</h4>
-        <input
-          placeholder="WhatsApp number with country code"
-          value={whatsapp}
-          onChange={(e) => setWhatsapp(e.target.value)}
-        />
-        <label>
-          <input
-            type="checkbox"
-            checked={whatsappEnabled}
-            onChange={() => setWhatsappEnabled(!whatsappEnabled)}
-          />
-          Enable WhatsApp delivery
-        </label>
-        <button onClick={saveWhatsapp}>Save</button>
-      </div>
-
       <div className="upload-box">
         <input type="file" onChange={handleUpload} />
         {uploading && <span>Uploading...</span>}
       </div>
 
+      {/* 🔧 ACTION BUTTONS */}
       <div className="bulk-actions">
-        <button disabled={selectedIds.length !== 1} onClick={convertWordToPDF}>
-          Word → PDF
-        </button>
-        <button disabled={selectedIds.length !== 1} onClick={convertPDFToWord}>
-          PDF → Word
-        </button>
-        <button disabled={selectedIds.length < 2} onClick={mergePDFs}>
-          Merge PDFs
-        </button>
-        <button disabled={selectedIds.length !== 1} onClick={splitPDF}>
-          Split PDF
-        </button>
+        {selectedIds.length === 1 && (
+          <>
+            <button onClick={convertWordToPDF}>Word → PDF</button>
+            <button onClick={convertPDFToWord}>PDF → Word</button>
+            <button onClick={splitPDF}>Split PDF</button>
 
-        <input
-          placeholder="Signer name"
-          value={signer}
-          onChange={(e) => setSigner(e.target.value)}
-        />
-        <button disabled={selectedIds.length !== 1} onClick={signPDF}>
-          Sign PDF
-        </button>
+            <input
+              placeholder="Signer name"
+              value={signer}
+              onChange={(e) => setSigner(e.target.value)}
+            />
+            <button onClick={signPDF}>Sign PDF</button>
+          </>
+        )}
+
+        {selectedIds.length >= 2 && (
+          <button onClick={mergePDFs}>Merge PDFs</button>
+        )}
       </div>
 
       {loading ? (
@@ -321,14 +303,26 @@ const Dashboard = () => {
 
               <div className="file-info">
                 {file.filename.endsWith(".pdf") ? <FaFilePdf /> : <FaFileWord />}
-                <span>{file.filename}</span>
+
+                <span>
+                  {file.filename}
+
+                  {file.filename.endsWith(".zip") && (
+                    <span className="badge zip">ZIP</span>
+                  )}
+
+                  {getOperationLabel(file.filename) && (
+                    <span className="badge op">
+                      {getOperationLabel(file.filename)}
+                    </span>
+                  )}
+                </span>
               </div>
 
               <div className="actions">
                 <a href={file.public_url} target="_blank" rel="noreferrer">
                   Download
                 </a>
-
                 <FaWhatsapp onClick={() => shareWhatsApp(file)} />
                 <FaTrash onClick={() => deleteFile(file.id)} />
               </div>
