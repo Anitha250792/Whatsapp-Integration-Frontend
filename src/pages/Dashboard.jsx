@@ -56,17 +56,21 @@ const Dashboard = () => {
   /* ================= AUTH + POLLING ================= */
 
   useEffect(() => {
-    if (!token) {
-      navigate("/login");
-      return;
-    }
+  if (!token) {
+    navigate("/login");
+    return;
+  }
 
-    fetchUserProfile();
-    fetchFiles();
+  fetchUserProfile();
+  fetchFiles();
 
-    const interval = setInterval(fetchFiles, 5000);
-    return () => clearInterval(interval);
-  }, []);
+  const interval = setInterval(() => {
+    const t = localStorage.getItem("access");
+    if (t) fetchFiles();
+  }, 5000);
+
+  return () => clearInterval(interval);
+}, [token]);
 
   /* Clear selection when file list changes */
   useEffect(() => {
@@ -89,17 +93,25 @@ const Dashboard = () => {
   /* ================= FILES ================= */
 
   const fetchFiles = async () => {
-    try {
-      const res = await axios.get(`${API}/files/`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setFiles(Array.isArray(res.data) ? res.data : []);
-    } catch (err) {
-      console.error("Polling failed", err);
-    } finally {
-      setLoading(false);
+  if (!token) return;
+
+  try {
+    const res = await axios.get(`${API}/files/`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    setFiles(Array.isArray(res.data) ? res.data : []);
+  } catch (err) {
+    if (err.response?.status === 401) {
+      localStorage.clear();
+      navigate("/login");
     }
-  };
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const handleUpload = async (e) => {
     const file = e.target.files[0];
