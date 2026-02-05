@@ -1,4 +1,25 @@
-/* ===== HEADER USER ===== */
+.container {
+  width: 92%;
+  max-width: 920px;
+  margin: auto;
+}
+
+.dashboard {
+  background: radial-gradient(circle at top, #eef2ff, #f8fafc);
+  min-height: 100vh;
+  font-family: "Inter", "Segoe UI", sans-serif;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 24px;
+  background: linear-gradient(135deg, #2563eb, #3b82f6);
+  color: white;
+  box-shadow: 0 10px 30px rgba(37, 99, 235, 0.35);
+}
+
 .header-left {
   display: flex;
   align-items: center;
@@ -16,45 +37,8 @@
   font-weight: 700;
   color: white;
   font-size: 16px;
-  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.25);
 }
 
-.username {
-  font-size: 14px;
-  margin: 2px 0 0;
-  opacity: 0.9;
-}
-
-/* ====== GLOBAL ====== */
-.dashboard {
-  background: radial-gradient(circle at top, #eef2ff, #f8fafc);
-  min-height: 100vh;
-  font-family: "Inter", "Segoe UI", sans-serif;
-}
-
-/* ====== HEADER ====== */
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px 26px;
-  backdrop-filter: blur(10px);
-  background: linear-gradient(
-    135deg,
-    rgba(37, 99, 235, 0.95),
-    rgba(59, 130, 246, 0.95)
-  );
-  color: white;
-  box-shadow: 0 10px 30px rgba(37, 99, 235, 0.35);
-}
-
-.header h3 {
-  margin: 0;
-  font-weight: 600;
-  letter-spacing: 0.3px;
-}
-
-/* ====== LOGOUT ====== */
 .logout-btn {
   background: rgba(255, 255, 255, 0.15);
   border: none;
@@ -62,16 +46,10 @@
   color: white;
   border-radius: 999px;
   cursor: pointer;
-  transition: all 0.2s ease;
 }
 
-.logout-btn:hover {
-  background: rgba(255, 255, 255, 0.25);
-}
-
-/* ====== UPLOAD ====== */
 .upload-box {
-  margin: 26px auto;
+  margin: 28px auto;
   padding: 26px;
   background: white;
   border-radius: 18px;
@@ -82,30 +60,19 @@
   border: 2px dashed #c7d2fe;
 }
 
-.upload-box input {
-  cursor: pointer;
-}
-
-/* ====== BULK ACTIONS ====== */
 .bulk-actions {
+  width: 92%;
+  max-width: 920px;
   margin: 24px auto;
   padding: 18px;
   background: white;
   border-radius: 18px;
   display: flex;
-  gap: 12px;
   flex-wrap: wrap;
+  gap: 12px;
   align-items: center;
-  width: 92%;
-  max-width: 920px;
+  justify-content: center;
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.08);
-}
-
-.bulk-actions input {
-  padding: 9px 14px;
-  border-radius: 999px;
-  border: 1px solid #d1d5db;
-  outline: none;
 }
 
 .bulk-actions button {
@@ -115,24 +82,26 @@
   padding: 9px 16px;
   border-radius: 999px;
   cursor: pointer;
-  font-weight: 500;
-  transition: transform 0.15s, box-shadow 0.15s;
 }
 
-.bulk-actions button:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 14px rgba(37, 99, 235, 0.35);
+.bulk-actions button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
-/* ====== FILE LIST ====== */
+.bulk-actions input {
+  padding: 9px 14px;
+  border-radius: 999px;
+  border: 1px solid #d1d5db;
+}
+
 .file-list {
-  padding: 24px;
   width: 92%;
   max-width: 920px;
   margin: auto;
+  padding: 24px 0;
 }
 
-/* ====== FILE CARD ====== */
 .file-card {
   background: white;
   padding: 16px 18px;
@@ -142,22 +111,8 @@
   align-items: center;
   gap: 12px;
   box-shadow: 0 14px 40px rgba(0, 0, 0, 0.06);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-.file-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.1);
-}
-
-/* Selected highlight */
-.file-card input[type="checkbox"]:checked ~ .file-info {
-  background: #eef2ff;
-  padding: 6px 10px;
-  border-radius: 10px;
-}
-
-/* ====== FILE INFO ====== */
 .file-info {
   display: flex;
   align-items: center;
@@ -171,238 +126,8 @@
   word-break: break-word;
 }
 
-.file-icon {
-  font-size: 24px;
-}
-
-.file-icon.pdf {
-  color: #dc2626;
-}
-
-.file-icon.word {
-  color: #2563eb;
-}
-
-/* ====== ACTIONS ====== */
-.actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.actions button {
-  background: #eef2ff;
-  border: none;
-  padding: 7px 12px;
-  border-radius: 999px;
-  cursor: pointer;
-  font-size: 13px;
-  transition: background 0.2s;
-}
-
-.actions button:hover {
-  background: #c7d2fe;
-}
-
-.actions svg {
-  cursor: pointer;
-  font-size: 18px;
-  color: #374151;
-  transition: transform 0.15s ease, color 0.15s ease;
-}
-
-.actions svg:hover {
-  transform: scale(1.2);
-  color: #2563eb;
-}
-
-.actions .delete {
-  color: #dc2626;
-}
-
-.actions .delete:hover {
-  color: #b91c1c;
-}
-
-/* ====== LOADING ====== */
-.loading {
-  text-align: center;
-  margin-top: 50px;
-  font-weight: 500;
-  color: #4b5563;
-}
-
-/* ====== MOBILE ====== */
-@media (max-width: 640px) {
-  .file-card {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .actions {
-    width: 100%;
-    justify-content: flex-end;
-  }
-}
-
-
-.conversion-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.4);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  z-index: 9999;
-  color: #fff;
-  font-size: 18px;
-}
-
-.loader {
-  border: 5px solid #ddd;
-  border-top: 5px solid #25d366;
-  border-radius: 50%;
-  width: 50px;
-  height: 50px;
-  animation: spin 1s linear infinite;
-  margin-bottom: 12px;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-/* ===== Toast ===== */
-.toast {
-  position: fixed;
-  top: 20px;
-  right: 20px;
-  min-width: 260px;
-  padding: 14px 18px;
-  border-radius: 8px;
-  color: #fff;
-  font-size: 14px;
-  z-index: 9999;
-  animation: slideIn 0.3s ease;
-}
-
-.toast.success { background: #22c55e; }
-.toast.error { background: #ef4444; }
-.toast.info { background: #3b82f6; }
-
-@keyframes slideIn {
-  from { transform: translateX(100%); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
-}
-
-/* ===== Progress Bar ===== */
-.progress-box {
-  width: 260px;
-  margin-top: 10px;
-}
-
-.progress-bar {
-  height: 6px;
-  background: rgba(255,255,255,0.3);
-  border-radius: 5px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background: #fff;
-  width: 0%;
-  transition: width 0.3s ease;
-}
-
-/* ===== WHATSAPP SETTINGS BOX ===== */
-.whatsapp-box {
-  background: white;
-  padding: 18px;
-  border-radius: 16px;
-  width: 92%;
-  max-width: 620px;
-  margin: 24px auto;
-  box-shadow: 0 16px 40px rgba(0,0,0,0.08);
-}
-
-.whatsapp-box h4 {
-  margin-top: 0;
-  margin-bottom: 12px;
-}
-
-.whatsapp-box input[type="text"] {
-  width: 100%;
-  padding: 10px 14px;
-  border-radius: 999px;
-  border: 1px solid #d1d5db;
-  margin-bottom: 12px;
-}
-
-.whatsapp-box label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 14px;
-}
-
-.whatsapp-box button {
-  margin-top: 12px;
-  background: #25d366;
-  color: white;
-  border: none;
-  padding: 10px 18px;
-  border-radius: 999px;
-  cursor: pointer;
-  font-weight: 500;
-}
-
-/* ===== HEADER MOBILE ===== */
-@media (max-width: 640px) {
-  .header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-  }
-
-  .logout-btn {
-    align-self: flex-end;
-  }
-}
-
-/* ===== BULK ACTIONS MOBILE ===== */
-@media (max-width: 768px) {
-  .bulk-actions {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .bulk-actions button,
-  .bulk-actions input {
-    width: 100%;
-  }
-}
-
-/* ===== FILE CARD MOBILE ===== */
-@media (max-width: 640px) {
-  .file-card {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
-  }
-
-  .actions {
-    width: 100%;
-    justify-content: flex-end;
-  }
-}
-
 .badge {
-  margin-left: 8px;
+  margin-left: 6px;
   padding: 2px 6px;
   font-size: 11px;
   border-radius: 6px;
@@ -417,17 +142,51 @@
 .badge.op {
   background-color: #ede9fe;
   color: #5b21b6;
-  margin-left: 6px;
 }
 
-.bulk-actions button:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.bulk-actions {
+.actions {
   display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin: 20px 0;
+  gap: 12px;
+  align-items: center;
+}
+
+.actions svg {
+  cursor: pointer;
+  font-size: 18px;
+  color: #374151;
+}
+
+.actions svg:hover {
+  color: #2563eb;
+  transform: scale(1.15);
+}
+
+@media (max-width: 768px) {
+  .bulk-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .bulk-actions button,
+  .bulk-actions input {
+    width: 100%;
+  }
+}
+
+@media (max-width: 640px) {
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .file-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
 }

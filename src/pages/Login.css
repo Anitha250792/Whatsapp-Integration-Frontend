@@ -1,119 +1,63 @@
 * {
   box-sizing: border-box;
+  margin: 0;
+  padding: 0;
 }
 
-/* background */
-/* ===== LOGIN LAYOUT WRAPPER ===== */
+/* ================= PAGE ================= */
 .login-page {
   min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 20px;
+  padding: 24px;
+  background: radial-gradient(circle at top, #eef2ff, #f8fafc);
 }
 
-/* container for card + whatsapp info */
+/* ================= LAYOUT ================= */
 .login-layout {
   display: flex;
-  gap: 24px;
+  gap: 28px;
   align-items: flex-start;
   max-width: 900px;
   width: 100%;
+  justify-content: center;
 }
 
-/* ===== CARD ===== */
+/* ================= CARD ================= */
 .login-card {
   width: 100%;
   max-width: 380px;
   padding: 32px;
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.18);
   text-align: center;
 }
 
-/* ===== WHATSAPP INFO ===== */
-.whatsapp-info {
-  max-width: 360px;
-  background: #f1fdf6;
-  border-left: 5px solid #25d366;
-  padding: 18px;
-  border-radius: 12px;
-  font-size: 14px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-}
-
-.whatsapp-info h4 {
-  margin-top: 0;
-  margin-bottom: 10px;
-  font-size: 16px;
-}
-
-.whatsapp-info ul {
-  padding-left: 18px;
-  margin: 0;
-}
-
-.whatsapp-info li {
-  margin-bottom: 6px;
-}
-
-/* ===== SOCIAL GRID ===== */
-.social-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
-/* normalize google iframe */
-.social-grid iframe {
-  width: 100% !important;
-  height: 44px !important;
-}
-
-/* ===== MOBILE ===== */
-@media (max-width: 768px) {
-  .login-layout {
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .whatsapp-info {
-    max-width: 100%;
-  }
-}
-
-@media (max-width: 480px) {
-  .social-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-
-
-
-/* title */
+/* ================= TITLE ================= */
 .login-title {
-  margin-bottom: 24px;
+  margin-bottom: 22px;
   font-weight: 600;
+  font-size: 20px;
 }
 
-/* inputs */
+/* ================= INPUTS ================= */
 .login-card input {
   width: 100%;
-  padding: 11px 12px;
-  margin-bottom: 16px;
-  border-radius: 6px;
-  border: 1px solid #ddd;
+  padding: 11px 14px;
+  margin-bottom: 14px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  font-size: 14px;
 }
 
 .login-card input:focus {
-  border-color: #0d6efd;
+  border-color: #2563eb;
   outline: none;
 }
 
-/* password */
+/* ================= PASSWORD ================= */
 .password-field {
   position: relative;
 }
@@ -124,31 +68,46 @@
   top: 50%;
   transform: translateY(-50%);
   cursor: pointer;
+  font-size: 14px;
 }
 
-/* login button */
+/* ================= LOGIN BUTTON ================= */
 .login-btn {
   width: 100%;
   padding: 12px;
-  border-radius: 8px;
-  background: #0d6efd;
+  border-radius: 999px;
+  background: #2563eb;
   color: white;
   border: none;
-  font-size: 16px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
 }
 
+.login-btn:hover {
+  background: #1d4ed8;
+}
 
+/* ================= SOCIAL GRID ================= */
+.social-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 16px;
+}
 
-
-/* normalize both buttons */
+/* Normalize all social buttons */
 .social-item {
   height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
 }
 
-/* fix Google iframe */
+/* Google iframe */
 .social-item iframe {
   width: 100% !important;
   height: 44px !important;
@@ -159,32 +118,9 @@
   background: #1877f2;
   color: white;
   border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  cursor: pointer;
-  gap: 8px;
 }
 
-/* divider */
-.divider {
-  margin: 16px 0;
-  color: #999;
-}
-
-/* register */
-.register-text {
-  margin-top: 16px;
-  cursor: pointer;
-}
-
-/* mobile */
-@media (max-width: 480px) {
-  .social-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-
+/* Instagram */
 .instagram-btn {
   background: linear-gradient(
     45deg,
@@ -198,7 +134,69 @@
   font-weight: 600;
 }
 
-.instagram-btn:hover {
+.instagram-btn:hover,
+.facebook-btn:hover {
   opacity: 0.9;
 }
 
+/* ================= DIVIDER ================= */
+.divider {
+  margin: 16px 0;
+  color: #9ca3af;
+  font-size: 13px;
+}
+
+/* ================= REGISTER ================= */
+.register-text {
+  margin-top: 16px;
+  font-size: 14px;
+  cursor: pointer;
+  color: #2563eb;
+}
+
+/* ================= WHATSAPP INFO ================= */
+.whatsapp-info {
+  max-width: 360px;
+  background: #f1fdf6;
+  border-left: 5px solid #25d366;
+  padding: 20px;
+  border-radius: 14px;
+  font-size: 14px;
+  box-shadow: 0 14px 30px rgba(0,0,0,0.08);
+}
+
+.whatsapp-info h4 {
+  margin-bottom: 10px;
+  font-size: 16px;
+}
+
+.whatsapp-info ul {
+  padding-left: 18px;
+}
+
+.whatsapp-info li {
+  margin-bottom: 6px;
+}
+
+/* ================= TABLET ================= */
+@media (max-width: 768px) {
+  .login-layout {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .whatsapp-info {
+    max-width: 100%;
+  }
+}
+
+/* ================= MOBILE ================= */
+@media (max-width: 480px) {
+  .login-card {
+    padding: 26px;
+  }
+
+  .social-grid {
+    grid-template-columns: 1fr;
+  }
+}
