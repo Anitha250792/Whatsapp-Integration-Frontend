@@ -346,11 +346,12 @@ const Dashboard = () => {
   />
 
   <button
-    disabled={selectedIds.length !== 1}
-    onClick={signPDF}
-  >
-    Sign PDF
-  </button>
+  disabled={selectedIds.length !== 1 || !signer.trim()}
+  onClick={signPDF}
+>
+  Sign PDF
+</button>
+
 </div>
 
 
