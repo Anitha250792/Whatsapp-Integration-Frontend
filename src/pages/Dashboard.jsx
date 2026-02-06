@@ -209,7 +209,14 @@ const Dashboard = () => {
 
   /* ================= WHATSAPP ================= */
 
-
+  const shareWhatsApp = (file) => {
+    window.open(
+      `https://wa.me/?text=${encodeURIComponent(
+        `📄 ${file.filename}\nDownload:\n${file.public_url}`
+      )}`,
+      "_blank"
+    );
+  };
 
   const saveWhatsapp = async () => {
     try {
@@ -304,28 +311,28 @@ const Dashboard = () => {
       {/* 🔧 ACTION BUTTONS */}
       <div className="bulk-actions">
   <button
-    disabled={selectedIds.length !== 5}
+    disabled={selectedIds.length !== 1}
     onClick={convertWordToPDF}
   >
     Word → PDF
   </button>
 
   <button
-    disabled={selectedIds.length !== 5}
+    disabled={selectedIds.length !== 1}
     onClick={convertPDFToWord}
   >
     PDF → Word
   </button>
 
   <button
-    disabled={selectedIds.length < 5}
+    disabled={selectedIds.length < 2}
     onClick={mergePDFs}
   >
     Merge PDFs
   </button>
 
   <button
-    disabled={selectedIds.length !== 5}
+    disabled={selectedIds.length !== 1}
     onClick={splitPDF}
   >
     Split PDF
@@ -335,11 +342,11 @@ const Dashboard = () => {
     placeholder="Signer name"
     value={signer}
     onChange={(e) => setSigner(e.target.value)}
-    disabled={selectedIds.length !== 5}
+    disabled={selectedIds.length !== 1}
   />
 
   <button
-    disabled={selectedIds.length !== 5}
+    disabled={selectedIds.length !== 1}
     onClick={signPDF}
   >
     Sign PDF
