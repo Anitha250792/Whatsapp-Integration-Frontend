@@ -305,3 +305,7 @@
     padding: 20px;
   }
 }
+.badge.wa {
+  background: #dcfce7;
+  color: #166534;
+}

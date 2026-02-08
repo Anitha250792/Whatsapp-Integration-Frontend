@@ -54,12 +54,17 @@ const Dashboard = () => {
   };
 
   /* ================= AUTH + POLLING ================= */
+  const DEV_MODE = false;
 
-  useEffect(() => {
-  if (!token) {
+useEffect(() => {
+  if (!token && !DEV_MODE) {
     navigate("/login");
     return;
   }
+
+ 
+
+
 
   fetchUserProfile();
   fetchFiles();
@@ -74,33 +79,45 @@ const Dashboard = () => {
 
   /* Clear selection when file list changes */
   useEffect(() => {
-    setSelectedIds([]);
-  }, [files]);
+  // only clear if selected file no longer exists
+  setSelectedIds((prev) =>
+    prev.filter((id) => files.some((f) => f.id === id))
+  );
+}, [files]);
 
   const fetchUserProfile = async () => {
-    try {
-      const res = await axios.get(`${API}/dj-rest-auth/user/`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const name = res.data.username || res.data.email || "User";
-      setUsername(name);
-      setInitials(getInitials(name));
-    } catch {
-      navigate("/login");
-    }
-  };
+  if (!token && DEV_MODE) {
+    setUsername("Developer");
+    setInitials("D");
+    return;
+  }
+
+  try {
+    const res = await axios.get(`${API}/dj-rest-auth/user/`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const name = res.data.username || res.data.email || "User";
+    setUsername(name);
+    setInitials(getInitials(name));
+  } catch {
+    navigate("/login");
+  }
+};
 
   /* ================= FILES ================= */
 
   const fetchFiles = async () => {
-  if (!token) return;
+  if (!token && DEV_MODE) {
+    setFiles([]);
+    setLoading(false);
+    return;
+  }
 
   try {
     const res = await axios.get(`${API}/files/`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { Authorization: `Bearer ${token}` },
     });
+
     setFiles(Array.isArray(res.data) ? res.data : []);
   } catch (err) {
     if (err.response?.status === 401) {
@@ -113,25 +130,54 @@ const Dashboard = () => {
 };
 
 
+
+
   const handleUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+  if (!token && DEV_MODE) {
+    showToast("🔒 Login required to upload files", "error");
+    return;
+  }
 
-    setUploading(true);
-    const formData = new FormData();
-    formData.append("file", file);
+  const file = e.target.files[0];
+  if (!file) return;
 
-    try {
-      await axios.post(`${API}/files/upload/`, formData, {
+  setUploading(true);
+  const formData = new FormData();
+  formData.append("file", file);
+
+  try {
+    await axios.post(`${API}/files/upload/`, formData, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    showToast("File uploaded successfully", "success");
+    fetchFiles();
+  } catch {
+    showToast("Upload failed", "error");
+  } finally {
+    setUploading(false);
+  }
+};
+
+
+  const sendToWhatsApp = async (fileId) => {
+  try {
+    await axios.post(
+      `${API}/files/send-whatsapp/${fileId}/`,
+      {},
+      {
         headers: { Authorization: `Bearer ${token}` },
-      });
-      showToast("File uploaded successfully", "success");
-    } catch {
-      showToast("Upload failed", "error");
-    } finally {
-      setUploading(false);
-    }
-  };
+      }
+    );
+
+    showToast("📲 File sent to your WhatsApp", "success");
+  } catch (err) {
+    showToast(
+      err.response?.data?.error || "WhatsApp send failed",
+      "error"
+    );
+  }
+};
+
 
   /* ================= CONVERSIONS ================= */
 
@@ -209,14 +255,17 @@ const Dashboard = () => {
 
   /* ================= WHATSAPP ================= */
 
-  const shareWhatsApp = (file) => {
-    window.open(
-      `https://wa.me/?text=${encodeURIComponent(
-        `📄 ${file.filename}\nDownload:\n${file.public_url}`
-      )}`,
-      "_blank"
-    );
-  };
+ const shareWhatsApp = (file) => {
+  const text = `📄 ${file.filename}\nDownload:\n${file.public_url}`;
+
+  window.open(
+    `https://wa.me/?text=${encodeURIComponent(text)}`,
+    "_blank"
+  );
+
+  showToast("📲 WhatsApp opened with file link", "success");
+};
+
 
   const saveWhatsapp = async () => {
     try {
@@ -280,13 +329,18 @@ const Dashboard = () => {
   <div className="whatsapp-row">
     <input
       type="text"
-      placeholder="+91 98765 43210"
+      placeholder="+919876543210"
       value={whatsapp}
       onChange={(e) => setWhatsapp(e.target.value)}
     />
 
     <button onClick={saveWhatsapp}>Save</button>
+    {whatsappEnabled && (
+  <span className="badge wa">Auto WhatsApp</span>
+)}
+
   </div>
+
 
   <label className="whatsapp-toggle">
     <input
@@ -300,7 +354,13 @@ const Dashboard = () => {
 
       <div className="upload-box">
   <label className="upload-label">
-    <input type="file" onChange={handleUpload} hidden />
+    <input
+  type="file"
+  onChange={handleUpload}
+  hidden
+  disabled={!token && DEV_MODE}
+/>
+
     <span>📂 Click to choose file or drag & drop</span>
   </label>
 
@@ -339,18 +399,22 @@ const Dashboard = () => {
   </button>
 
   <input
-    placeholder="Signer name"
-    value={signer}
-    onChange={(e) => setSigner(e.target.value)}
-    disabled={selectedIds.length !== 1}
-  />
+  type="text"
+  placeholder="Signer name"
+  value={signer}
+  onChange={(e) => setSigner(e.target.value)}
+  disabled={selectedIds.length !== 1}
+/>
 
-  <button
+
+ <button
   disabled={selectedIds.length !== 1 || !signer.trim()}
   onClick={signPDF}
 >
   Sign PDF
 </button>
+
+
 
 </div>
 
@@ -395,7 +459,11 @@ const Dashboard = () => {
                 <a href={file.public_url} target="_blank" rel="noreferrer">
                   Download
                 </a>
-                <FaWhatsapp onClick={() => shareWhatsApp(file)} />
+                <FaWhatsapp
+  title="Send to WhatsApp"
+  onClick={() => sendToWhatsApp(file.id)}
+/>
+
                 <FaTrash onClick={() => deleteFile(file.id)} />
               </div>
             </div>
