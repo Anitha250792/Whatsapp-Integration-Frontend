@@ -8,17 +8,28 @@
   background: radial-gradient(circle at top, #eef2ff, #f8fafc);
   min-height: 100vh;
   font-family: "Inter", "Segoe UI", sans-serif;
+
+  padding-top: 86px; /* 👈 IMPORTANT */
 }
 
+
 .header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000;
+
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 18px 24px;
+
   background: linear-gradient(135deg, #2563eb, #3b82f6);
   color: white;
   box-shadow: 0 10px 30px rgba(37, 99, 235, 0.35);
 }
+
 
 .header-left {
   display: flex;

@@ -460,7 +460,7 @@ useEffect(() => {
                   Download
                 </a>
                 <FaWhatsapp
-  title="Send to WhatsApp"
+  title="Share via WhatsApp"
   onClick={() => sendToWhatsApp(file.id)}
 />
 
