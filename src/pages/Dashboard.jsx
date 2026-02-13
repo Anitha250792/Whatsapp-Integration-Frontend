@@ -45,6 +45,7 @@ const Dashboard = () => {
 
   const [whatsapp, setWhatsapp] = useState("");
   const [whatsappEnabled, setWhatsappEnabled] = useState(true);
+  const [showWhatsappNotice, setShowWhatsappNotice] = useState(false);
 
   /* ================= HELPERS ================= */
 
@@ -268,20 +269,28 @@ useEffect(() => {
 
 
   const saveWhatsapp = async () => {
-    try {
-      await axios.post(
-        `${API}/accounts/update-whatsapp/`,
-        {
-          whatsapp_number: whatsapp,
-          whatsapp_enabled: whatsappEnabled,
-        },
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      showToast("WhatsApp settings saved", "success");
-    } catch (err) {
-      showToast(err.response?.data?.error || "Invalid number", "error");
+  try {
+    await axios.post(
+      `${API}/accounts/update-whatsapp/`,
+      {
+        whatsapp_number: whatsapp,
+        whatsapp_enabled: whatsappEnabled,
+      },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    showToast("WhatsApp settings saved", "success");
+
+    // 🆕 show link notice
+    if (whatsappEnabled) {
+      setShowWhatsappNotice(true);
     }
-  };
+
+  } catch (err) {
+    showToast(err.response?.data?.error || "Invalid number", "error");
+  }
+};
+
 
   const deleteFile = async (id) => {
     if (!window.confirm("Delete this file?")) return;
@@ -299,11 +308,51 @@ useEffect(() => {
     localStorage.clear();
     navigate("/login");
   };
+   
+  const getWhatsAppStatusBadge = (status) => {
+  if (!status || status === "not_sent") return null;
+
+  const map = {
+    queued: "🕒 Queued",
+    sent: "✅ Delivered",
+    delivered: "✅ Delivered",
+    failed: "❌ Failed",
+  };
+
+  return map[status] || status;
+};
 
   /* ================= UI ================= */
 
   return (
     <div className="dashboard">
+      {showWhatsappNotice && (
+  <div className="whatsapp-notice">
+    <h4>🔗 Link WhatsApp to receive files</h4>
+    <p>
+      To enable WhatsApp delivery, send this message once:
+    </p>
+
+    <code>join construction-cage</code>
+
+    <p>Send it to:</p>
+    <strong>+1 415 523 8886</strong>
+
+    <a
+      href="https://wa.me/14155238886?text=join%20construction-cage"
+      target="_blank"
+      rel="noreferrer"
+      className="wa-link"
+    >
+      Open WhatsApp & Link
+    </a>
+
+    <button onClick={() => setShowWhatsappNotice(false)}>
+      Got it
+    </button>
+  </div>
+)}
+
       {toast && <div className={`toast ${toast.type}`}>{toast.message}</div>}
 
       <div className="header">
@@ -415,7 +464,6 @@ useEffect(() => {
     PDF → Word
   </button>
 
-
 </div>
 
 
@@ -442,6 +490,15 @@ useEffect(() => {
 
                 <span>
                   {file.filename}
+
+                  {file.whatsapp_status && (
+  <span
+    className={`badge wa-status ${file.whatsapp_status}`}
+  >
+    {getWhatsAppStatusBadge(file.whatsapp_status)}
+  </span>
+)}
+
 
                   {file.filename.endsWith(".zip") && (
                     <span className="badge zip">ZIP</span>
@@ -471,6 +528,7 @@ useEffect(() => {
         </div>
       )}
     </div>
+    
   );
 };
 
