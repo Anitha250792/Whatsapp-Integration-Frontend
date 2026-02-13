@@ -370,20 +370,7 @@ useEffect(() => {
 
       {/* 🔧 ACTION BUTTONS */}
       <div className="bulk-actions">
-  <button
-    disabled={selectedIds.length !== 1}
-    onClick={convertWordToPDF}
-  >
-    Word → PDF
-  </button>
-
-  <button
-    disabled={selectedIds.length !== 1}
-    onClick={convertPDFToWord}
-  >
-    PDF → Word
-  </button>
-
+  
   <button
     disabled={selectedIds.length < 2}
     onClick={mergePDFs}
@@ -396,6 +383,20 @@ useEffect(() => {
     onClick={splitPDF}
   >
     Split PDF
+  </button>
+
+  <button
+    disabled={selectedIds.length !== 1}
+    onClick={convertWordToPDF}
+  >
+    Word → PDF
+  </button>
+
+  <button
+    disabled={selectedIds.length !== 1}
+    onClick={convertPDFToWord}
+  >
+    PDF → Word
   </button>
 
   <input
