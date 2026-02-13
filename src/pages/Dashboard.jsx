@@ -385,19 +385,6 @@ useEffect(() => {
     Split PDF
   </button>
 
-  <button
-    disabled={selectedIds.length !== 1}
-    onClick={convertWordToPDF}
-  >
-    Word → PDF
-  </button>
-
-  <button
-    disabled={selectedIds.length !== 1}
-    onClick={convertPDFToWord}
-  >
-    PDF → Word
-  </button>
 
   <input
   type="text"
@@ -414,7 +401,19 @@ useEffect(() => {
 >
   Sign PDF
 </button>
+<button
+    disabled={selectedIds.length !== 1}
+    onClick={convertWordToPDF}
+  >
+    Word → PDF
+  </button>
 
+  <button
+    disabled={selectedIds.length !== 1}
+    onClick={convertPDFToWord}
+  >
+    PDF → Word
+  </button>
 
 
 </div>
