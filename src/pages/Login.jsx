@@ -202,6 +202,7 @@ const Login = () => {
     <li>1 WhatsApp conversation = 24-hour chat window</li>
     <li>Multiple file conversions count as <b>1 conversation</b></li>
     <li>Free tier supports <b>50 conversations/day</b></li>
+    <li>Auto Send Email <b>Unlimited</b></li>
   </ul>
 </div>
       </div>
